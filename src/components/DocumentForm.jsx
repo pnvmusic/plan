@@ -17,7 +17,7 @@ export default function DocumentForm({ onClose, onSaved }) {
   const { projects } = useData()
   const { profile: me } = useAuth()
   const toast = useToast()
-  const [f, setF] = useState({ name: '', type: DOC_TYPES[0], project_id: projects[0]?.id || '', note: '' })
+  const [f, setF] = useState({ name: '', type: DOC_TYPES[0], project_id: '', note: '' })
   const [file, setFile] = useState(null)
   const [busy, setBusy] = useState(false)
   const set = (k, v) => setF((s) => ({ ...s, [k]: v }))
@@ -51,9 +51,11 @@ export default function DocumentForm({ onClose, onSaved }) {
         <div className="form-row">
           <div className="form-grp"><label>ประเภทเอกสาร</label>
             <select value={f.type} onChange={(e) => set('type', e.target.value)}>{DOC_TYPES.map((t) => <option key={t}>{t}</option>)}</select></div>
-          <div className="form-grp"><label>โปรเจกต์</label>
+          <div className="form-grp"><label>โปรเจกต์ (ไม่บังคับ)</label>
             <select value={f.project_id || ''} onChange={(e) => set('project_id', e.target.value)}>
-              {projects.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}</select></div>
+              <option value="">— ไม่ระบุ —</option>
+              {projects.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}
+            </select></div>
         </div>
         <div className="form-grp"><label>Note</label>
           <textarea value={f.note} placeholder="เช่น เซ็นครบแล้ว" onChange={(e) => set('note', e.target.value)} /></div>

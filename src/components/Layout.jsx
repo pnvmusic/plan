@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useData } from '../context/DataContext'
@@ -36,7 +36,11 @@ export default function Layout({ children }) {
   const { profile, signOut } = useAuth()
   const { tasks, expenses } = useData()
   const [open, setOpen] = useState(false)
-  const [dark, setDark] = useState(true)
+  const [dark, setDark] = useState(false)
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', 'light')
+  }, [])
 
   const meta = META[loc.pathname] || { t: 'pnvPlan', s: '' }
   const openTasks = tasks.filter((t) => !t.done).length
@@ -45,8 +49,8 @@ export default function Layout({ children }) {
   const toggleTheme = () => {
     const next = !dark
     setDark(next)
-    if (next) document.documentElement.removeAttribute('data-theme')
-    else document.documentElement.setAttribute('data-theme', 'light')
+    if (next) document.documentElement.setAttribute('data-theme', 'light')
+    else document.documentElement.removeAttribute('data-theme')
   }
 
   const goSearch = (e) => {
@@ -112,7 +116,7 @@ export default function Layout({ children }) {
             🔎 <input placeholder="ค้นหาเพลง / ศิลปิน… (Enter)" onKeyDown={goSearch} />
           </div>
           <div className="topbar-actions">
-            <button className="icon-btn" onClick={toggleTheme} title="สลับธีม">{dark ? '🌙' : '☀️'}</button>
+            <button className="icon-btn" onClick={toggleTheme} title="สลับธีม">{dark ? '☀️' : '🌙'}</button>
           </div>
         </div>
         <div className="content">{children}</div>

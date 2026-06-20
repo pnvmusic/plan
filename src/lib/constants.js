@@ -22,6 +22,8 @@ export const BOARD_STAGES = ['Demo','Arrangement','Recording','Editing','Mixing'
 
 export const TYPES = ['Single', 'EP', 'Album', 'Acoustic', 'Cover']
 
+export const ARTISTS = ['p n v .', 'p n v . feat.', 'อื่นๆ']
+
 export const EXP_CATS = [
   'ค่า MV','ค่า Mix','ค่า Master','ค่า Arranger','ค่า Studio',
   'ค่า Musician','ค่า Artwork','ค่าเดินทาง','ค่าอุปกรณ์','อื่นๆ',
