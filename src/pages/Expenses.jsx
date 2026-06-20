@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { EXP_CATS, EXP_STATUS } from '../lib/constants'
 import { fmtMoney, thDate, thDateLong, todayISO } from '../lib/format'
-import { Badge } from '../components/ui'
+import { Badge, FilePreviewModal } from '../components/ui'
 import ExpenseForm from '../components/ExpenseForm'
 import { exportExpensesCSV, exportExpensesPDF } from '../lib/exporters'
 
@@ -14,6 +14,7 @@ export default function Expenses() {
   const toast = useToast()
   const [filters, setFilters] = useState({ cat: '', status: '', proj: '' })
   const [form, setForm] = useState(undefined)
+  const [preview, setPreview] = useState(null)
   const editable = can('expenses')
   const set = (k, v) => setFilters((f) => ({ ...f, [k]: v }))
 
@@ -65,7 +66,11 @@ export default function Expenses() {
                 <td style={{ fontSize: 12 }}>{x.vendor}</td>
                 <td style={{ fontSize: 12 }}>{x.method}</td>
                 <td><Badge text={x.status} color={EXP_STATUS[x.status]} /></td>
-                <td>{x.receipt_path ? <span title={x.receipt_path}>📎</span> : <span style={{ color: 'var(--txt-3)' }}>—</span>}</td>
+                <td onClick={(e) => { if (x.receipt_path) { e.stopPropagation(); setPreview(x) } }}>
+                  {x.receipt_path
+                    ? <button className="btn btn-sm btn-ghost" style={{ padding: '4px 8px' }} title="ดูหลักฐาน">📎 ดู</button>
+                    : <span style={{ color: 'var(--txt-3)' }}>—</span>}
+                </td>
                 <td style={{ textAlign: 'right', fontWeight: 600, ...(x.status === 'ยกเลิก' ? { textDecoration: 'line-through', color: 'var(--txt-3)' } : {}) }}>{fmtMoney(x.amount)}</td>
               </tr>
             )) : <tr><td colSpan={8}><div className="empty"><div className="ico">💸</div>ไม่มีรายการ</div></td></tr>}
@@ -75,6 +80,9 @@ export default function Expenses() {
 
       {form !== undefined && <ExpenseForm id={form}
         onClose={() => setForm(undefined)} onSaved={() => { setForm(undefined); reload() }} />}
+      {preview && <FilePreviewModal path={preview.receipt_path}
+        name={`ใบเสร็จ_${preview.vendor || preview.category}_${preview.date}`}
+        onClose={() => setPreview(null)} />}
     </>
   )
 }

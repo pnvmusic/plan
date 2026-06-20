@@ -4,9 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { DOC_TYPES } from '../lib/constants'
 import { thDate } from '../lib/format'
-import { Avatar } from '../components/ui'
+import { Avatar, FilePreviewModal } from '../components/ui'
 import DocumentForm from '../components/DocumentForm'
-import * as api from '../lib/api'
 
 export default function Documents() {
   const { documents, projects, project, profile, reload } = useData()
@@ -14,6 +13,7 @@ export default function Documents() {
   const toast = useToast()
   const [filters, setFilters] = useState({ q: '', type: '', proj: '' })
   const [form, setForm] = useState(false)
+  const [preview, setPreview] = useState(null)
   const editable = can('documents')
   const set = (k, v) => setFilters((f) => ({ ...f, [k]: v }))
 
@@ -24,11 +24,6 @@ export default function Documents() {
     return true
   }).sort((a, b) => (b.uploaded_at || '').localeCompare(a.uploaded_at || ''))
 
-  const open = async (d) => {
-    if (!d.file_path) return toast('ไฟล์นี้เป็นตัวอย่าง (ยังไม่มีไฟล์จริง)')
-    const url = await api.getFileUrl(d.file_path)
-    window.open(url, '_blank')
-  }
   const remove = async (d) => {
     if (!window.confirm('ลบเอกสารนี้?')) return
     await api.deleteDocument(d.id); await reload(); toast('ลบเอกสารแล้ว')
@@ -65,7 +60,9 @@ export default function Documents() {
                 <td style={{ fontSize: 12, whiteSpace: 'nowrap' }}>{thDate(d.uploaded_at)}</td>
                 <td style={{ fontSize: 12, color: 'var(--txt-2)' }}>{d.size || '—'}</td>
                 <td style={{ whiteSpace: 'nowrap' }}>
-                  <button className="btn btn-sm btn-ghost" title="ดู/ดาวน์โหลด" onClick={() => open(d)}>⬇</button>
+                  <button className="btn btn-sm btn-ghost" title="Preview"
+                    disabled={!d.file_path}
+                    onClick={() => d.file_path ? setPreview(d) : toast('ยังไม่มีไฟล์จริง')}>👁</button>
                   {editable && <button className="btn btn-sm btn-ghost" style={{ color: 'var(--danger)' }} onClick={() => remove(d)}>🗑</button>}
                 </td>
               </tr>
@@ -75,6 +72,7 @@ export default function Documents() {
       </div>
 
       {form && <DocumentForm onClose={() => setForm(false)} onSaved={() => { setForm(false); reload() }} />}
+      {preview && <FilePreviewModal path={preview.file_path} name={preview.name} onClose={() => setPreview(null)} />}
     </>
   )
 }
