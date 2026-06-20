@@ -38,7 +38,7 @@ export default function Layout({ children }) {
   const [open, setOpen] = useState(false)
   const [dark, setDark] = useState(true)
 
-  const meta = META[loc.pathname] || { t: 'MuseFlow', s: '' }
+  const meta = META[loc.pathname] || { t: 'pnvPlan', s: '' }
   const openTasks = tasks.filter((t) => !t.done).length
   const pendingExp = expenses.filter((e) => e.status === 'รอเบิก').length
 
@@ -67,7 +67,7 @@ export default function Layout({ children }) {
         <div className="sb-top">
           <div className="brandmark" style={{ marginBottom: 0 }}>
             <div className="brand-logo" style={{ width: 34, height: 34, fontSize: 18 }}>🎵</div>
-            <div className="brand-name" style={{ fontSize: 17 }}>MuseFlow</div>
+            <div className="brand-name" style={{ fontSize: 17 }}>pnvPlan</div>
           </div>
         </div>
         <nav className="sb-nav">

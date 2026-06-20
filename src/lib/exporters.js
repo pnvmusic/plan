@@ -11,7 +11,7 @@ export function exportExpensesCSV(rows, project) {
   const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })
   const a = document.createElement('a')
   a.href = URL.createObjectURL(blob)
-  a.download = 'expenses_museflow.csv'
+  a.download = 'expenses_pnvplan.csv'
   a.click()
   URL.revokeObjectURL(a.href)
 }
@@ -22,7 +22,7 @@ export function exportExpensesPDF(rows, project) {
   const w = window.open('', '_blank')
   if (!w) return
   w.document.write(`<!DOCTYPE html><html lang="th"><head><meta charset="utf-8">
-  <title>รายงานค่าใช้จ่าย MuseFlow</title>
+  <title>รายงานค่าใช้จ่าย pnvPlan</title>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai&display=swap" rel="stylesheet">
   <style>
     body{font-family:'IBM Plex Sans Thai',sans-serif;padding:30px;color:#222}
@@ -34,7 +34,7 @@ export function exportExpensesPDF(rows, project) {
     .r{text-align:right}
     .tot{font-size:16px;font-weight:700;margin-top:14px;text-align:right}
   </style></head><body>
-  <h1>🎵 MuseFlow — รายงานค่าใช้จ่าย</h1>
+  <h1>🎵 pnvPlan — รายงานค่าใช้จ่าย</h1>
   <div class="sub">วันที่ออกรายงาน: ${thDateLong(todayISO())}</div>
   <table><thead><tr>
     <th>วันที่</th><th>หมวด</th><th>โปรเจกต์</th><th>ผู้รับเงิน</th><th>วิธีจ่าย</th><th>สถานะ</th><th class="r">จำนวน</th>

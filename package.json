@@ -1,9 +1,9 @@
 {
-  "name": "museflow-app",
+  "name": "pnvplan-app",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "MuseFlow — ระบบวางแผนและติดตามงานเพลงสำหรับศิลปิน/ทีมโปรดักชัน",
+  "description": "pnvPlan — ระบบวางแผนงานของ p n v",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

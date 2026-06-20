@@ -32,8 +32,8 @@ export default function Login() {
         <div className="brandmark">
           <div className="brand-logo">🎵</div>
           <div>
-            <div className="brand-name">MuseFlow</div>
-            <div className="brand-tag">ระบบวางแผนและติดตามงานเพลง</div>
+            <div className="brand-name">pnvPlan</div>
+            <div className="brand-tag">ระบบวางแผนงานของ p n v</div>
           </div>
         </div>
 

@@ -20,7 +20,7 @@ export default function App() {
       <div className="center-screen">
         <div className="login-card" style={{ maxWidth: 460 }}>
           <div className="brandmark"><div className="brand-logo">🎵</div>
-            <div><div className="brand-name">MuseFlow</div></div></div>
+            <div><div className="brand-name">pnvPlan</div></div></div>
           <h3 style={{ marginBottom: 10 }}>ยังไม่ได้ตั้งค่า Supabase</h3>
           <p style={{ color: 'var(--txt-2)', fontSize: 13, lineHeight: 1.7 }}>
             สร้างไฟล์ <code>.env</code> จาก <code>.env.example</code> แล้วใส่ค่า
