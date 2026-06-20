@@ -1,0 +1,143 @@
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { useData } from '../context/DataContext'
+import { useAuth } from '../context/AuthContext'
+import { EV_COLOR, EV_ICON, EV_LABEL } from '../lib/constants'
+import { thDate, thDateLong, ymd, todayISO } from '../lib/format'
+import EventDetail from '../components/EventDetail'
+import EventForm from '../components/EventForm'
+
+const DOW = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส']
+
+export default function Calendar() {
+  const { events } = useData()
+  const { can } = useAuth()
+  const [params, setParams] = useSearchParams()
+  const [view, setView] = useState('month')
+  const [cursor, setCursor] = useState(todayISO())
+  const [detailId, setDetailId] = useState(null)
+  const [form, setForm] = useState(undefined) // undefined=closed; {} or {date} = new; id string = edit
+  const today = todayISO()
+
+  useEffect(() => {
+    const open = params.get('open')
+    if (open) { setDetailId(open); params.delete('open'); setParams(params, { replace: true }) }
+  }, []) // eslint-disable-line
+
+  const evOn = (ds) => events.filter((e) => e.date === ds).sort((a, b) => (a.time || '').localeCompare(b.time || ''))
+
+  const nav = (dir) => {
+    const d = new Date(cursor)
+    if (view === 'month') d.setMonth(d.getMonth() + dir)
+    else if (view === 'week') d.setDate(d.getDate() + 7 * dir)
+    else d.setDate(d.getDate() + dir)
+    setCursor(ymd(d))
+  }
+
+  const c = new Date(cursor)
+  let label = ''
+  if (view === 'month') label = c.toLocaleDateString('th-TH', { month: 'long', year: 'numeric' })
+  else if (view === 'week') {
+    const st = new Date(c); st.setDate(c.getDate() - c.getDay())
+    const en = new Date(st); en.setDate(st.getDate() + 6)
+    label = `${thDate(ymd(st))} – ${thDate(ymd(en))}`
+  } else label = thDateLong(cursor)
+
+  return (
+    <>
+      <div className="toolbar">
+        <button className="btn btn-sm" onClick={() => nav(-1)}>‹</button>
+        <button className="btn btn-sm" onClick={() => setCursor(today)}>วันนี้</button>
+        <button className="btn btn-sm" onClick={() => nav(1)}>›</button>
+        <div style={{ fontWeight: 600, fontSize: 15, marginLeft: 6 }}>{label}</div>
+        <div style={{ flex: 1 }} />
+        <div className="seg">
+          <button className={view === 'month' ? 'on' : ''} onClick={() => setView('month')}>เดือน</button>
+          <button className={view === 'week' ? 'on' : ''} onClick={() => setView('week')}>สัปดาห์</button>
+          <button className={view === 'day' ? 'on' : ''} onClick={() => setView('day')}>วัน</button>
+        </div>
+        {can('calendar') && <button className="btn btn-primary btn-sm" onClick={() => setForm({ date: cursor })}>＋ เพิ่มนัด</button>}
+      </div>
+
+      <div className="card">
+        {view === 'month' && <MonthView c={c} today={today} evOn={evOn}
+          onOpen={setDetailId} onAdd={(ds) => can('calendar') && setForm({ date: ds })} />}
+        {view === 'week' && <WeekView c={c} today={today} evOn={evOn}
+          onOpen={setDetailId} onAdd={(ds) => can('calendar') && setForm({ date: ds })} />}
+        {view === 'day' && <DayView ds={cursor} evOn={evOn} onOpen={setDetailId} />}
+      </div>
+
+      <div style={{ display: 'flex', gap: 16, marginTop: 12, fontSize: 12, color: 'var(--txt-2)', flexWrap: 'wrap' }}>
+        {Object.keys(EV_COLOR).map((k) => (
+          <span key={k} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span className="dot" style={{ background: EV_COLOR[k] }} />{EV_LABEL[k]}</span>
+        ))}
+      </div>
+
+      {detailId && <EventDetail id={detailId} onClose={() => setDetailId(null)}
+        onEdit={(id) => { setDetailId(null); setForm(id) }} />}
+      {form !== undefined && <EventForm initial={form}
+        onClose={() => setForm(undefined)} onSaved={() => setForm(undefined)} />}
+    </>
+  )
+}
+
+function MonthView({ c, today, evOn, onOpen, onAdd }) {
+  const first = new Date(c.getFullYear(), c.getMonth(), 1)
+  const start = new Date(first); start.setDate(1 - first.getDay())
+  const cells = []
+  for (let i = 0; i < 42; i++) {
+    const d = new Date(start); d.setDate(start.getDate() + i)
+    const ds = ymd(d), dim = d.getMonth() !== c.getMonth(), isToday = ds === today
+    const evs = evOn(ds)
+    cells.push(
+      <div key={i} className={'cal-cell' + (dim ? ' dim' : '') + (isToday ? ' today' : '')}
+        onDoubleClick={() => onAdd(ds)}>
+        <span className="cal-num">{d.getDate()}</span>
+        {evs.slice(0, 3).map((e) => (
+          <button key={e.id} className="cal-ev" style={{ background: EV_COLOR[e.type] + '22', color: EV_COLOR[e.type] }}
+            onClick={() => onOpen(e.id)}>{EV_ICON[e.type]} {e.time} {e.title}</button>
+        ))}
+        {evs.length > 3 && <div style={{ fontSize: 10, color: 'var(--txt-2)' }}>+{evs.length - 3} เพิ่มเติม</div>}
+      </div>
+    )
+  }
+  return <div className="cal-grid">{DOW.map((d) => <div key={d} className="cal-dow">{d}</div>)}{cells}</div>
+}
+
+function WeekView({ c, today, evOn, onOpen, onAdd }) {
+  const start = new Date(c); start.setDate(c.getDate() - c.getDay())
+  const cells = []
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(start); d.setDate(start.getDate() + i)
+    const ds = ymd(d), evs = evOn(ds), isToday = ds === today
+    cells.push(
+      <div key={i} className={'cal-cell' + (isToday ? ' today' : '')} style={{ minHeight: 300 }}
+        onDoubleClick={() => onAdd(ds)}>
+        <div style={{ fontSize: 11, color: 'var(--txt-2)', textAlign: 'center', marginBottom: 4 }}>{DOW[i]} {d.getDate()}</div>
+        {evs.map((e) => (
+          <button key={e.id} className="cal-ev" style={{ background: EV_COLOR[e.type] + '22', color: EV_COLOR[e.type], whiteSpace: 'normal' }}
+            onClick={() => onOpen(e.id)}>{e.time} {EV_ICON[e.type]}<br />{e.title}</button>
+        ))}
+      </div>
+    )
+  }
+  return <div className="cal-grid">{cells}</div>
+}
+
+function DayView({ ds, evOn, onOpen }) {
+  const { profile } = useData()
+  const evs = evOn(ds)
+  if (!evs.length) return <div className="empty"><div className="ico">📅</div>ไม่มีนัดหมายในวันนี้</div>
+  return evs.map((e) => (
+    <div key={e.id} className="list-row" style={{ cursor: 'pointer' }} onClick={() => onOpen(e.id)}>
+      <div style={{ width: 60, fontWeight: 600, fontSize: 13 }}>{e.time}</div>
+      <div className="stat-ico" style={{ width: 36, height: 36, margin: 0, background: EV_COLOR[e.type] + '22', color: EV_COLOR[e.type] }}>{EV_ICON[e.type]}</div>
+      <div style={{ flex: 1 }}><div style={{ fontWeight: 600, fontSize: 14 }}>{e.title}</div>
+        <div style={{ fontSize: 12, color: 'var(--txt-2)' }}>{e.studio || '—'}</div></div>
+      <div className="av-stack">{(e.attendees || []).map((a) => (
+        <div key={a} className="avatar" style={{ width: 26, height: 26, fontSize: 10, background: profile(a).color }}>{profile(a).initials}</div>
+      ))}</div>
+    </div>
+  ))
+}
