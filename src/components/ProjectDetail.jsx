@@ -2,7 +2,7 @@ import { useData } from '../context/DataContext'
 import { useAuth } from '../context/AuthContext'
 import { stage, PRIORITY, EV_ICON } from '../lib/constants'
 import { fmtMoney, thDate, thDateLong } from '../lib/format'
-import { Avatar, Badge, Progress, Modal } from './ui'
+import { Avatar, Badge, Progress, Modal, Linkify, parseRef } from './ui'
 import * as api from '../lib/api'
 
 export default function ProjectDetail({ id, onClose, onEdit, onDelete }) {
@@ -51,12 +51,16 @@ export default function ProjectDetail({ id, onClose, onEdit, onDelete }) {
             <div style={{ marginTop: 8, fontSize: 13 }}>📅 {thDateLong(p.deadline)}</div></div>
         </div>
         {p.note && <><div className="mini-label" style={{ marginTop: 14 }}>Note</div>
-          <div style={{ fontSize: 13, marginTop: 5 }}>{p.note}</div></>}
+          <div style={{ fontSize: 13, marginTop: 5 }}><Linkify text={p.note} /></div></>}
 
-        <div className="mini-label" style={{ marginTop: 18 }}>ไฟล์ Reference ({p.refs?.length || 0})</div>
+        <div className="mini-label" style={{ marginTop: 18 }}>ลิงก์ไฟล์ / Reference ({p.refs?.length || 0})</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 7 }}>
-          {p.refs?.length ? p.refs.map((r, i) => <span key={i} className="tag">📎 {r}</span>)
-            : <span style={{ fontSize: 12, color: 'var(--txt-2)' }}>— ไม่มี</span>}
+          {p.refs?.length ? p.refs.map((r, i) => {
+            const { label, url } = parseRef(r)
+            return url
+              ? <a key={i} className="tag" href={url} target="_blank" rel="noreferrer">📎 {label}</a>
+              : <span key={i} className="tag">📎 {label}</span>
+          }) : <span style={{ fontSize: 12, color: 'var(--txt-2)' }}>— ไม่มี</span>}
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginTop: 18 }}>

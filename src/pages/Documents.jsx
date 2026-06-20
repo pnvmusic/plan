@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { DOC_TYPES } from '../lib/constants'
 import { thDate } from '../lib/format'
-import { Avatar, FilePreviewModal } from '../components/ui'
+import * as api from '../lib/api'
+import { Avatar, FilePreviewModal, Linkify } from '../components/ui'
 import DocumentForm from '../components/DocumentForm'
 
 export default function Documents() {
@@ -52,7 +53,7 @@ export default function Documents() {
                 <td><div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
                   <span style={{ fontSize: 18 }}>{d.name.endsWith('.pdf') ? '📕' : '📄'}</span>
                   <div><div style={{ fontWeight: 600, fontSize: 13 }}>{d.name}</div>
-                    {d.note && <div style={{ fontSize: 11, color: 'var(--txt-2)' }}>{d.note}</div>}</div></div></td>
+                    {d.note && <div style={{ fontSize: 11, color: 'var(--txt-2)' }}><Linkify text={d.note} /></div>}</div></div></td>
                 <td><span className="tag">{d.type}</span></td>
                 <td style={{ fontSize: 12 }}>{project(d.project_id).title}</td>
                 <td><div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>

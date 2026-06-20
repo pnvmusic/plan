@@ -47,6 +47,59 @@ export function Empty({ icon = '📭', children }) {
   return <div className="empty"><div className="ico">{icon}</div>{children}</div>
 }
 
+// แปลงข้อความเปล่าให้ URL กดได้ + รักษาการขึ้นบรรทัด
+const URL_RE = /(https?:\/\/[^\s<>()\]]+|www\.[^\s<>()\]]+|drive\.google\.com\/[^\s<>()\]]+)/gi
+const MD_LINK_RE = /\[([^\]\n]+)\]\((https?:\/\/[^\s)]+|www\.[^\s)]+|drive\.google\.com\/[^\s)]+)\)/gi
+const TRAILING_PUNCT_RE = /[.,!?;:]+$/
+
+const hrefFor = (url = '') => /^https?:\/\//i.test(url) ? url : `https://${url}`
+
+function plainLinkNodes(text, keyPrefix = 'link') {
+  const nodes = []
+  const value = String(text)
+  let last = 0
+  for (const match of value.matchAll(URL_RE)) {
+    const raw = match[0]
+    const trailing = raw.match(TRAILING_PUNCT_RE)?.[0] || ''
+    const url = trailing ? raw.slice(0, -trailing.length) : raw
+    if (match.index > last) nodes.push(value.slice(last, match.index))
+    nodes.push(<a key={`${keyPrefix}-${match.index}`} href={hrefFor(url)} target="_blank" rel="noreferrer">{url}</a>)
+    if (trailing) nodes.push(trailing)
+    last = match.index + raw.length
+  }
+  if (last < value.length) nodes.push(value.slice(last))
+  return nodes
+}
+
+export function Linkify({ text }) {
+  if (!text) return null
+  const value = String(text)
+  const nodes = []
+  let last = 0
+
+  for (const match of value.matchAll(MD_LINK_RE)) {
+    if (match.index > last) nodes.push(...plainLinkNodes(value.slice(last, match.index), `txt-${last}`))
+    nodes.push(<a key={`md-${match.index}`} href={hrefFor(match[2])} target="_blank" rel="noreferrer">{match[1]}</a>)
+    last = match.index + match[0].length
+  }
+  if (last < value.length) nodes.push(...plainLinkNodes(value.slice(last), `txt-${last}`))
+
+  return (
+    <span style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+      {nodes}
+    </span>
+  )
+}
+
+// แยก ref string เป็น { label, url } — รองรับรูปแบบ "ชื่อ — url" หรือ url ล้วน
+export function parseRef(r = '') {
+  const rawUrl = (r.match(URL_RE) || [])[0] || ''
+  const url = rawUrl ? hrefFor(rawUrl.replace(TRAILING_PUNCT_RE, '')) : ''
+  if (!url) return { label: r, url: '' }
+  const label = r.replace(rawUrl, '').replace(/[—\-|:\s]+$/, '').trim()
+  return { label: label || rawUrl, url }
+}
+
 const IMG_EXT = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif', 'bmp']
 const ext = (path = '') => path.split('.').pop().toLowerCase()
 

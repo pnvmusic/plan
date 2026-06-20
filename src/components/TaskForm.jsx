@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { useData } from '../context/DataContext'
+import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { STAGES, PRIORITY } from '../lib/constants'
 import * as api from '../lib/api'
 import { Modal } from './ui'
 
-export default function TaskForm({ id, onClose, onSaved }) {
+export default function TaskForm({ id, onClose, onSaved, onEditProject }) {
   const { tasks, projects, profiles } = useData()
+  const { can } = useAuth()
   const toast = useToast()
   const existing = id ? tasks.find((t) => t.id === id) : null
   const [f, setF] = useState(existing || {
@@ -15,6 +17,8 @@ export default function TaskForm({ id, onClose, onSaved }) {
   })
   const [busy, setBusy] = useState(false)
   const set = (k, v) => setF((s) => ({ ...s, [k]: v }))
+  const projectTitle = projects.find((p) => p.id === f.project_id)?.title || '—'
+  const canEditProject = can('projects') && f.project_id && onEditProject
 
   const save = async () => {
     if (!f.title.trim()) return toast('กรอกชื่องานก่อน')
@@ -40,8 +44,14 @@ export default function TaskForm({ id, onClose, onSaved }) {
         <div className="form-grp"><label>ชื่องาน *</label>
           <input value={f.title} placeholder="เช่น มิกซ์เสียงร้องหลัก" onChange={(e) => set('title', e.target.value)} /></div>
         <div className="form-grp"><label>เพลงที่เกี่ยวข้อง</label>
-          <select value={f.project_id} onChange={(e) => set('project_id', e.target.value)}>
-            {projects.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}</select></div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <select value={f.project_id} onChange={(e) => set('project_id', e.target.value)}>
+              {projects.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}</select>
+            {canEditProject && (
+              <button type="button" className="btn btn-sm" title={`แก้ไขเพลง ${projectTitle}`}
+                onClick={() => onEditProject(f.project_id)}>✏️ แก้ไขเพลง</button>
+            )}
+          </div></div>
         <div className="form-row">
           <div className="form-grp"><label>ขั้นตอน (คอลัมน์)</label>
             <select value={f.stage} onChange={(e) => set('stage', e.target.value)}>

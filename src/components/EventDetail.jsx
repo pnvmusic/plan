@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { EV_ICON, EV_LABEL } from '../lib/constants'
 import { thDateLong } from '../lib/format'
-import { Avatar, Modal } from './ui'
+import { Avatar, Modal, Linkify } from './ui'
 import * as api from '../lib/api'
 
 export default function EventDetail({ id, onClose, onEdit }) {
@@ -34,7 +34,7 @@ export default function EventDetail({ id, onClose, onEdit }) {
         <div className="kv"><span className="k">👥 ผู้เข้าร่วม</span>
           <div className="av-stack">{(e.attendees || []).map((a) => <Avatar key={a} user={profile(a)} size={26} />)}</div></div>
         {e.note && <><div className="mini-label" style={{ marginTop: 12 }}>Note</div>
-          <div style={{ fontSize: 13, marginTop: 5 }}>{e.note}</div></>}
+          <div style={{ fontSize: 13, marginTop: 5 }}><Linkify text={e.note} /></div></>}
       </div>
       <div className="modal-foot"><button className="btn" onClick={onClose}>ปิด</button></div>
     </Modal>
