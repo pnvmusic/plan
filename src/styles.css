@@ -143,10 +143,10 @@ a{color:var(--brand-2);text-decoration:none}
 .kcard-title{font-weight:600;font-size:13px;margin-bottom:4px}
 .kcard-meta{display:flex;align-items:center;gap:8px;margin-top:9px;font-size:11px;color:var(--txt-2)}
 
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
-.cal-dow{text-align:center;font-size:11px;color:var(--txt-2);font-weight:600;padding:6px 0}
-.cal-cell{min-height:96px;background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:7px;
-  display:flex;flex-direction:column;gap:4px;transition:.12s}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;width:100%}
+.cal-dow{text-align:center;font-size:11px;color:var(--txt-2);font-weight:600;padding:6px 0;min-width:0}
+.cal-cell{min-height:96px;min-width:0;background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:7px;
+  display:flex;flex-direction:column;gap:4px;transition:.12s;overflow:hidden}
 .cal-cell.dim{opacity:.4}
 .cal-cell.today{border-color:var(--brand);box-shadow:0 0 0 1px var(--brand)}
 .cal-num{font-size:12px;font-weight:600;align-self:flex-end}
