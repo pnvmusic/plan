@@ -34,16 +34,20 @@ export const getTasks = () =>
   supabase.from('tasks').select('*').order('created_at').then(handle)
 
 async function syncTaskDeadlineEvent(task) {
+  let appleSyncError = null
   const { data: existing, error: findError } = await supabase
     .from('events')
-    .select('id')
+    .select('*')
     .eq('task_id', task.id)
     .maybeSingle()
   if (findError) throw findError
 
   if (!task.deadline) {
-    if (existing?.id) await deleteEvent(existing.id)
-    return null
+    if (existing?.id) {
+      try { await syncAppleEvent('delete', existing) } catch (err) { appleSyncError = err }
+      await deleteEvent(existing.id)
+    }
+    return { event: null, appleSyncError }
   }
 
   const eventRow = {
@@ -59,34 +63,48 @@ async function syncTaskDeadlineEvent(task) {
     note: '',
   }
 
-  return existing?.id
-    ? updateEvent(existing.id, eventRow)
-    : createEvent(eventRow)
+  const event = existing?.id
+    ? await updateEvent(existing.id, eventRow)
+    : await createEvent(eventRow)
+
+  try {
+    await syncAppleEvent(existing?.id ? 'update' : 'create', event)
+  } catch (err) {
+    appleSyncError = err
+  }
+  return { event, appleSyncError }
 }
 
 export const createTask = (row) =>
   supabase.from('tasks').insert(row).select().single().then(async (result) => {
     const task = handle(result)
-    await syncTaskDeadlineEvent(task)
+    const { appleSyncError } = await syncTaskDeadlineEvent(task)
+    if (appleSyncError) task.appleSyncError = appleSyncError
     return task
   })
 
 export const updateTask = (id, patch) =>
   supabase.from('tasks').update(patch).eq('id', id).select().single().then(async (result) => {
     const task = handle(result)
-    await syncTaskDeadlineEvent(task)
+    const { appleSyncError } = await syncTaskDeadlineEvent(task)
+    if (appleSyncError) task.appleSyncError = appleSyncError
     return task
   })
 
 export const deleteTask = async (id) => {
+  let appleSyncError = null
   const { data: existing, error: findError } = await supabase
     .from('events')
-    .select('id')
+    .select('*')
     .eq('task_id', id)
     .maybeSingle()
   if (findError) throw findError
-  if (existing?.id) await deleteEvent(existing.id)
-  return supabase.from('tasks').delete().eq('id', id).then(handle)
+  if (existing?.id) {
+    try { await syncAppleEvent('delete', existing) } catch (err) { appleSyncError = err }
+    await deleteEvent(existing.id)
+  }
+  await supabase.from('tasks').delete().eq('id', id).then(handle)
+  return { appleSyncError }
 }
 
 // ---------- EVENTS ----------

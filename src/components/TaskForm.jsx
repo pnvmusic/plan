@@ -30,12 +30,21 @@ export default function TaskForm({ id, onClose, onSaved, onEditProject, initialP
         done: Boolean(f.done), deadline: f.deadline || null,
         assignee_id: f.assignee_id, priority: f.priority,
       }
-      if (id) await api.updateTask(id, row)
-      else await api.createTask(row)
-      toast(id ? 'บันทึกแล้ว' : 'เพิ่ม Task แล้ว'); onSaved()
+      const saved = id ? await api.updateTask(id, row) : await api.createTask(row)
+      const baseMessage = id ? 'บันทึก Task แล้ว' : 'เพิ่ม Task แล้ว'
+      toast(saved.appleSyncError
+        ? `${baseMessage} แต่ sync deadline ไป Apple ไม่สำเร็จ: ${saved.appleSyncError.message}`
+        : f.deadline ? `${baseMessage} และ sync deadline ไป Apple Calendar แล้ว` : baseMessage)
+      onSaved()
     } catch (e) { toast('ผิดพลาด: ' + e.message) } finally { setBusy(false) }
   }
-  const remove = async () => { await api.deleteTask(id); toast('ลบ Task แล้ว'); onSaved() }
+  const remove = async () => {
+    const result = await api.deleteTask(id)
+    toast(result.appleSyncError
+      ? 'ลบ Task แล้ว แต่ลบ deadline ใน Apple ไม่สำเร็จ: ' + result.appleSyncError.message
+      : 'ลบ Task แล้ว และ sync Apple Calendar แล้ว')
+    onSaved()
+  }
 
   return (
     <Modal onClose={onClose}>
