@@ -27,23 +27,23 @@ begin
   delete from public.projects;
 
   -- ---------- PROJECTS ----------
-  insert into public.projects (title, artist, type, status, deadline, owner_id, note, refs, created_by)
+  insert into public.projects (title, artist, type, status, release_date, deadline, owner_id, note, refs, created_by)
   values
-   ('แสงสุดท้าย','The Lantern','Single','Mixing','2026-07-04', me,'ซิงเกิลนำของ EP ตั้งใจปล่อยก่อนทัวร์', array['demo_v3.mp3','lyrics_final.pdf','guide_vocal.wav'], me) returning id into p1;
-  insert into public.projects (title, artist, type, status, deadline, owner_id, note, refs, created_by)
-  values ('ทะเลไม่เคยหลับ','Niran','EP','Recording','2026-06-28', me,'EP 5 เพลง อัดสดทั้งวง', array['arrangement.pdf','reference_track.mp3'], me) returning id into p2;
-  insert into public.projects (title, artist, type, status, deadline, owner_id, note, refs, created_by)
-  values ('เมืองที่ไม่มีเธอ','Plawan','Single','Mastering','2026-06-24', me,'รอมาสเตอร์รอบสุดท้าย', array['mix_v5.wav'], me) returning id into p3;
-  insert into public.projects (title, artist, type, status, deadline, owner_id, note, refs, created_by)
-  values ('ดาวคนละดวง','The Lantern','Album','Arrangement','2026-09-12', me,'อัลบั้มเต็ม 10 เพลง — งานใหญ่', array['album_concept.pdf','demo_track1.mp3'], me) returning id into p4;
-  insert into public.projects (title, artist, type, status, deadline, owner_id, note, refs, created_by)
-  values ('คำว่ารัก (Acoustic)','Mali','Acoustic','Artwork','2026-06-22', me,'เวอร์ชันอะคูสติก รออาร์ตเวิร์ก', array['acoustic_mix.wav','cover_draft.png'], me) returning id into p5;
-  insert into public.projects (title, artist, type, status, deadline, owner_id, note, refs, created_by)
-  values ('ฝนเดือนหก','Niran','Cover','Released','2026-05-30', me,'คัฟเวอร์เพลงเก่า ปล่อยแล้วบน Spotify', array['final_master.wav','artwork_final.png'], me) returning id into p6;
-  insert into public.projects (title, artist, type, status, deadline, owner_id, note, refs, created_by)
-  values ('ปลายทางเดียวกัน','Plawan','Single','Demo','2026-08-15', me,'เพิ่งเริ่มทำเดโม', array['idea_voice_memo.m4a'], me) returning id into p7;
-  insert into public.projects (title, artist, type, status, deadline, owner_id, note, refs, created_by)
-  values ('ลมหายใจของเมือง','The Lantern','Single','MV','2026-07-18', me,'ถ่าย MV สัปดาห์หน้า', array['mv_storyboard.pdf','master.wav'], me) returning id into p8;
+   ('แสงสุดท้าย','The Lantern','Single','Mixing','2026-07-18','2026-07-04', me,'ซิงเกิลนำของ EP ตั้งใจปล่อยก่อนทัวร์', array['demo_v3.mp3','lyrics_final.pdf','guide_vocal.wav'], me) returning id into p1;
+  insert into public.projects (title, artist, type, status, release_date, deadline, owner_id, note, refs, created_by)
+  values ('ทะเลไม่เคยหลับ','Niran','EP','Recording','2026-07-12','2026-06-28', me,'EP 5 เพลง อัดสดทั้งวง', array['arrangement.pdf','reference_track.mp3'], me) returning id into p2;
+  insert into public.projects (title, artist, type, status, release_date, deadline, owner_id, note, refs, created_by)
+  values ('เมืองที่ไม่มีเธอ','Plawan','Single','Mastering','2026-07-08','2026-06-24', me,'รอมาสเตอร์รอบสุดท้าย', array['mix_v5.wav'], me) returning id into p3;
+  insert into public.projects (title, artist, type, status, release_date, deadline, owner_id, note, refs, created_by)
+  values ('ดาวคนละดวง','The Lantern','Album','Arrangement','2026-09-26','2026-09-12', me,'อัลบั้มเต็ม 10 เพลง — งานใหญ่', array['album_concept.pdf','demo_track1.mp3'], me) returning id into p4;
+  insert into public.projects (title, artist, type, status, release_date, deadline, owner_id, note, refs, created_by)
+  values ('คำว่ารัก (Acoustic)','Mali','Acoustic','Artwork','2026-07-06','2026-06-22', me,'เวอร์ชันอะคูสติก รออาร์ตเวิร์ก', array['acoustic_mix.wav','cover_draft.png'], me) returning id into p5;
+  insert into public.projects (title, artist, type, status, release_date, deadline, owner_id, note, refs, created_by)
+  values ('ฝนเดือนหก','Niran','Cover','Released','2026-06-13','2026-05-30', me,'คัฟเวอร์เพลงเก่า ปล่อยแล้วบน Spotify', array['final_master.wav','artwork_final.png'], me) returning id into p6;
+  insert into public.projects (title, artist, type, status, release_date, deadline, owner_id, note, refs, created_by)
+  values ('ปลายทางเดียวกัน','Plawan','Single','Demo','2026-08-29','2026-08-15', me,'เพิ่งเริ่มทำเดโม', array['idea_voice_memo.m4a'], me) returning id into p7;
+  insert into public.projects (title, artist, type, status, release_date, deadline, owner_id, note, refs, created_by)
+  values ('ลมหายใจของเมือง','The Lantern','Single','MV','2026-08-01','2026-07-18', me,'ถ่าย MV สัปดาห์หน้า', array['mv_storyboard.pdf','master.wav'], me) returning id into p8;
 
   -- ---------- TASKS ----------
   insert into public.tasks (project_id, title, stage, done, deadline, assignee_id, priority) values

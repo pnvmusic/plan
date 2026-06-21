@@ -47,6 +47,8 @@ export default function ProjectDetail({ id, onClose, onEdit, onDelete }) {
           <div><div className="mini-label">ผู้รับผิดชอบ</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
               <Avatar user={profile(p.owner_id)} size={28} /><span style={{ fontSize: 13 }}>{profile(p.owner_id).name}</span></div></div>
+          <div><div className="mini-label">Release date</div>
+            <div style={{ marginTop: 8, fontSize: 13 }}>🚀 {thDateLong(p.release_date)}</div></div>
           <div><div className="mini-label">Deadline</div>
             <div style={{ marginTop: 8, fontSize: 13 }}>📅 {thDateLong(p.deadline)}</div></div>
         </div>

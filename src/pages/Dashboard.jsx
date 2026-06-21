@@ -60,7 +60,7 @@ export default function Dashboard() {
           <div className="section-head"><h3>โปรเจกต์ที่กำลังดำเนินการ</h3><div className="spacer" />
             <button className="btn btn-sm" onClick={() => nav('/projects')}>ดูทั้งหมด →</button></div>
           <table className="table">
-            <thead><tr><th>เพลง</th><th>สถานะ</th><th>Deadline</th><th>Progress</th></tr></thead>
+            <thead><tr><th>เพลง</th><th>สถานะ</th><th>Release / Deadline</th><th>Progress</th></tr></thead>
             <tbody>
               {projects.filter((p) => p.status !== 'Released')
                 .sort((a, b) => (a.deadline || '').localeCompare(b.deadline || '')).slice(0, 6).map((p) => {
@@ -75,7 +75,8 @@ export default function Dashboard() {
                       <td><div style={{ fontWeight: 600 }}>{p.title}</div>
                         <div style={{ fontSize: 11, color: 'var(--txt-2)' }}>{p.artist}</div></td>
                       <td><Badge text={s.label} color={s.color} /></td>
-                      <td><div style={{ fontSize: 12 }}>{thDate(p.deadline)}</div>
+                      <td><div style={{ fontSize: 12 }}>🚀 {thDate(p.release_date)}</div>
+                        <div style={{ fontSize: 12 }}>📅 {thDate(p.deadline)}</div>
                         <div style={{ fontSize: 11 }}>{ddTxt}</div></td>
                       <td style={{ minWidth: 120 }}><Progress value={pr} />
                         <div style={{ fontSize: 11, color: 'var(--txt-2)', marginTop: 3 }}>{pr}%</div></td>

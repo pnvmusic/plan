@@ -3,7 +3,7 @@ import { useData } from '../context/DataContext'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { STAGES, TYPES, ARTISTS } from '../lib/constants'
-import { todayISO } from '../lib/format'
+import { shiftDateISO, todayISO } from '../lib/format'
 import * as api from '../lib/api'
 import { Modal, parseRef } from './ui'
 
@@ -12,14 +12,23 @@ export default function ProjectForm({ id, onClose, onSaved }) {
   const { profile: me } = useAuth()
   const toast = useToast()
   const existing = id ? projects.find((p) => p.id === id) : null
-  const [f, setF] = useState(existing || {
-    title: '', artist: 'p n v .', type: 'Single', status: 'Idea',
-    deadline: '2026-07-01', owner_id: me.id, note: '', refs: [],
-  })
+  const defaultReleaseDate = shiftDateISO(todayISO(), 14)
+  const [f, setF] = useState(existing
+    ? { ...existing, release_date: existing.release_date || shiftDateISO(existing.deadline, 14) }
+    : {
+      title: '', artist: 'p n v .', type: 'Single', status: 'Idea',
+      release_date: defaultReleaseDate, deadline: shiftDateISO(defaultReleaseDate, -14),
+      owner_id: me.id, note: '', refs: [],
+    })
   const [busy, setBusy] = useState(false)
   const [linkName, setLinkName] = useState('')
   const [linkUrl, setLinkUrl] = useState('')
   const set = (k, v) => setF((s) => ({ ...s, [k]: v }))
+  const setReleaseDate = (v) => setF((s) => ({
+    ...s,
+    release_date: v,
+    deadline: v ? shiftDateISO(v, -14) : '',
+  }))
 
   const addLink = () => {
     const url = linkUrl.trim()
@@ -37,7 +46,8 @@ export default function ProjectForm({ id, onClose, onSaved }) {
     try {
       const row = {
         title: f.title.trim(), artist: f.artist.trim(), type: f.type, status: f.status,
-        deadline: f.deadline, owner_id: f.owner_id, note: f.note || '', refs: f.refs || [],
+        release_date: f.release_date || null, deadline: f.deadline || null,
+        owner_id: f.owner_id, note: f.note || '', refs: f.refs || [],
       }
       if (id) await api.updateProject(id, row)
       else await api.createProject({ ...row, created_by: me.id })
@@ -65,12 +75,16 @@ export default function ProjectForm({ id, onClose, onSaved }) {
           <div className="form-grp"><label>สถานะ</label>
             <select value={f.status} onChange={(e) => set('status', e.target.value)}>
               {STAGES.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}</select></div>
-          <div className="form-grp"><label>Deadline</label>
-            <input type="date" value={f.deadline || ''} onChange={(e) => set('deadline', e.target.value)} /></div>
+          <div className="form-grp"><label>Release date</label>
+            <input type="date" value={f.release_date || ''} onChange={(e) => setReleaseDate(e.target.value)} /></div>
         </div>
-        <div className="form-grp"><label>ผู้รับผิดชอบ</label>
-          <select value={f.owner_id || ''} onChange={(e) => set('owner_id', e.target.value)}>
-            {profiles.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}</select></div>
+        <div className="form-row">
+          <div className="form-grp"><label>Deadline (14 วันก่อน Release)</label>
+            <input type="date" value={f.deadline || ''} onChange={(e) => set('deadline', e.target.value)} /></div>
+          <div className="form-grp"><label>ผู้รับผิดชอบ</label>
+            <select value={f.owner_id || ''} onChange={(e) => set('owner_id', e.target.value)}>
+              {profiles.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}</select></div>
+        </div>
         <div className="form-grp"><label>Note</label>
           <textarea value={f.note || ''} placeholder="รายละเอียดเพิ่มเติม หรือ [ชื่อไฟล์](https://drive.google.com/...)"
             onChange={(e) => set('note', e.target.value)} /></div>

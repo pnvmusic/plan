@@ -40,6 +40,7 @@ create table public.projects (
   artist      text not null,
   type        project_type not null default 'Single',
   status      project_stage not null default 'Idea',
+  release_date date,
   deadline    date,
   owner_id    uuid references public.profiles(id) on delete set null,
   note        text default '',
@@ -50,6 +51,7 @@ create table public.projects (
 );
 create index on public.projects (status);
 create index on public.projects (owner_id);
+create index on public.projects (release_date);
 create index on public.projects (deadline);
 
 -- ============================================================================

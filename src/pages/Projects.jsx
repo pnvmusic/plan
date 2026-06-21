@@ -92,7 +92,9 @@ export default function Projects() {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, borderTop: '1px solid var(--border)', paddingTop: 12 }}>
                 <Avatar user={profile(p.owner_id)} size={28} />
-                <div style={{ fontSize: 11, color: 'var(--txt-2)', flex: 1 }}>📅 {ddTxt}</div>
+                <div style={{ fontSize: 11, color: 'var(--txt-2)', flex: 1 }}>
+                  🚀 {thDate(p.release_date)} · 📅 {ddTxt}
+                </div>
                 {p.refs?.length ? <span className="tag">📎 {p.refs.length}</span> : null}
               </div>
             </div>

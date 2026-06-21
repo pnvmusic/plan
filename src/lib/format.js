@@ -18,4 +18,12 @@ export const ymd = (date) => {
 
 export const todayISO = () => ymd(new Date())
 
+export const shiftDateISO = (iso, days) => {
+  if (!iso) return ''
+  const [year, month, day] = iso.split('-').map(Number)
+  const d = new Date(year, month - 1, day)
+  d.setDate(d.getDate() + days)
+  return ymd(d)
+}
+
 export const initialsOf = (name = '') => (name.trim().slice(0, 2) || '?')
