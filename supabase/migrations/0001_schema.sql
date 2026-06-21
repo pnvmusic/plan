@@ -84,12 +84,14 @@ create table public.events (
   end_time    text default '',
   studio      text default '',
   project_id  uuid references public.projects(id) on delete set null,
+  task_id     uuid references public.tasks(id) on delete cascade,
   attendees   uuid[] not null default '{}',
   note        text default '',
   created_at  timestamptz not null default now()
 );
 create index on public.events (date);
 create index on public.events (project_id);
+create index on public.events (task_id);
 
 -- ============================================================================
 -- EXPENSES
@@ -225,6 +227,32 @@ create policy "events_read" on public.events
 create policy "events_write" on public.events
   for all using (my_role() in ('Admin','Manager'))
   with check (my_role() in ('Admin','Manager'));
+
+create policy "events_task_deadline_insert" on public.events
+  for insert with check (
+    my_role() in ('Admin','Manager','Team Member')
+    and type = 'deadline'
+    and task_id is not null
+  );
+
+create policy "events_task_deadline_update" on public.events
+  for update using (
+    my_role() in ('Admin','Manager','Team Member')
+    and type = 'deadline'
+    and task_id is not null
+  )
+  with check (
+    my_role() in ('Admin','Manager','Team Member')
+    and type = 'deadline'
+    and task_id is not null
+  );
+
+create policy "events_task_deadline_delete" on public.events
+  for delete using (
+    my_role() in ('Admin','Manager','Team Member')
+    and type = 'deadline'
+    and task_id is not null
+  );
 
 -- ---------- EXPENSES ----------
 alter table public.expenses enable row level security;

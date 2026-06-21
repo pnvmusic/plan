@@ -6,14 +6,15 @@ import { STAGES, PRIORITY } from '../lib/constants'
 import * as api from '../lib/api'
 import { Modal } from './ui'
 
-export default function TaskForm({ id, onClose, onSaved, onEditProject }) {
+export default function TaskForm({ id, onClose, onSaved, onEditProject, initialProjectId, lockProject = false }) {
   const { tasks, projects, profiles } = useData()
   const { can } = useAuth()
   const toast = useToast()
   const existing = id ? tasks.find((t) => t.id === id) : null
+  const initialProject = projects.find((p) => p.id === initialProjectId) || projects[0]
   const [f, setF] = useState(existing || {
-    title: '', project_id: projects[0]?.id, stage: 'Recording',
-    deadline: '2026-07-01', assignee_id: profiles[0]?.id, priority: 'กลาง',
+    title: '', project_id: initialProject?.id, stage: initialProject?.status || 'Recording',
+    done: false, deadline: initialProject?.deadline || '', assignee_id: profiles[0]?.id, priority: 'กลาง',
   })
   const [busy, setBusy] = useState(false)
   const set = (k, v) => setF((s) => ({ ...s, [k]: v }))
@@ -26,10 +27,11 @@ export default function TaskForm({ id, onClose, onSaved, onEditProject }) {
     try {
       const row = {
         title: f.title.trim(), project_id: f.project_id, stage: f.stage,
-        deadline: f.deadline, assignee_id: f.assignee_id, priority: f.priority,
+        done: Boolean(f.done), deadline: f.deadline || null,
+        assignee_id: f.assignee_id, priority: f.priority,
       }
       if (id) await api.updateTask(id, row)
-      else await api.createTask({ ...row, done: false })
+      else await api.createTask(row)
       toast(id ? 'บันทึกแล้ว' : 'เพิ่ม Task แล้ว'); onSaved()
     } catch (e) { toast('ผิดพลาด: ' + e.message) } finally { setBusy(false) }
   }
@@ -44,14 +46,17 @@ export default function TaskForm({ id, onClose, onSaved, onEditProject }) {
         <div className="form-grp"><label>ชื่องาน *</label>
           <input value={f.title} placeholder="เช่น มิกซ์เสียงร้องหลัก" onChange={(e) => set('title', e.target.value)} /></div>
         <div className="form-grp"><label>เพลงที่เกี่ยวข้อง</label>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <select value={f.project_id} onChange={(e) => set('project_id', e.target.value)}>
-              {projects.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}</select>
-            {canEditProject && (
-              <button type="button" className="btn btn-sm" title={`แก้ไขเพลง ${projectTitle}`}
-                onClick={() => onEditProject(f.project_id)}>✏️ แก้ไขเพลง</button>
-            )}
-          </div></div>
+          {lockProject
+            ? <div className="tag" style={{ width: 'fit-content' }}>🎼 {projectTitle}</div>
+            : <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <select value={f.project_id} onChange={(e) => set('project_id', e.target.value)}>
+                {projects.map((p) => <option key={p.id} value={p.id}>{p.title}</option>)}</select>
+              {canEditProject && (
+                <button type="button" className="btn btn-sm" title={`แก้ไขเพลง ${projectTitle}`}
+                  onClick={() => onEditProject(f.project_id)}>✏️ แก้ไขเพลง</button>
+              )}
+            </div>}
+        </div>
         <div className="form-row">
           <div className="form-grp"><label>ขั้นตอน (คอลัมน์)</label>
             <select value={f.stage} onChange={(e) => set('stage', e.target.value)}>
@@ -67,6 +72,10 @@ export default function TaskForm({ id, onClose, onSaved, onEditProject }) {
           <div className="form-grp"><label>Deadline</label>
             <input type="date" value={f.deadline || ''} onChange={(e) => set('deadline', e.target.value)} /></div>
         </div>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 9, marginTop: 4, cursor: 'pointer' }}>
+          <input type="checkbox" checked={Boolean(f.done)} onChange={(e) => set('done', e.target.checked)} />
+          <span style={{ fontSize: 13, fontWeight: 600 }}>ทำเสร็จแล้ว</span>
+        </label>
       </div>
       <div className="modal-foot"><button className="btn" onClick={onClose}>ยกเลิก</button>
         <button className="btn btn-primary" disabled={busy} onClick={save}>{busy ? 'กำลังบันทึก...' : 'บันทึก'}</button></div>

@@ -1,13 +1,16 @@
+import { useState } from 'react'
 import { useData } from '../context/DataContext'
 import { useAuth } from '../context/AuthContext'
 import { stage, PRIORITY, EV_ICON } from '../lib/constants'
 import { fmtMoney, thDate, thDateLong } from '../lib/format'
 import { Avatar, Badge, Progress, Modal, Linkify, parseRef } from './ui'
+import TaskForm from './TaskForm'
 import * as api from '../lib/api'
 
 export default function ProjectDetail({ id, onClose, onEdit, onDelete }) {
-  const { projects, tasks, expenses, documents, events, profile, projectProgress, setTasks } = useData()
+  const { projects, tasks, expenses, documents, events, profile, projectProgress, setTasks, reload } = useData()
   const { can } = useAuth()
+  const [taskForm, setTaskForm] = useState(undefined)
   const p = projects.find((x) => x.id === id)
   if (!p) return null
 
@@ -71,11 +74,17 @@ export default function ProjectDetail({ id, onClose, onEdit, onDelete }) {
           <div className="stat" style={{ padding: 12 }}><div className="stat-val" style={{ fontSize: 18 }}>{docs.length}</div><div className="stat-label">เอกสาร</div></div>
         </div>
 
-        {ts.length > 0 && <>
-          <div className="mini-label" style={{ marginTop: 18 }}>งาน (Tasks)</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 18 }}>
+          <div className="mini-label">งาน (Tasks)</div>
+          <div style={{ flex: 1 }} />
+          {can('tasks') && <button className="btn btn-sm" onClick={() => setTaskForm(null)}>＋ เพิ่ม Task</button>}
+        </div>
+        {ts.length > 0 ? <>
           {ts.map((t) => (
-            <div key={t.id} className="list-row">
-              <div className={'checkbox' + (t.done ? ' on' : '')} onClick={() => toggle(t)}>{t.done ? '✓' : ''}</div>
+            <div key={t.id} className="list-row" style={{ cursor: can('tasks') ? 'pointer' : 'default' }}
+              onClick={() => can('tasks') && setTaskForm(t.id)}>
+              <div className={'checkbox' + (t.done ? ' on' : '')}
+                onClick={(e) => { e.stopPropagation(); toggle(t) }}>{t.done ? '✓' : ''}</div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 13, ...(t.done ? { textDecoration: 'line-through', color: 'var(--txt-2)' } : {}) }}>{t.title}</div>
                 <div style={{ fontSize: 11, color: 'var(--txt-2)' }}>{stage(t.stage).label} · 📅 {thDate(t.deadline)}</div>
@@ -84,7 +93,7 @@ export default function ProjectDetail({ id, onClose, onEdit, onDelete }) {
               <Avatar user={profile(t.assignee_id)} size={24} />
             </div>
           ))}
-        </>}
+        </> : <div className="empty" style={{ marginTop: 8 }}><div className="ico">🧾</div>ยังไม่มี Task ในเพลงนี้</div>}
 
         {evs.length > 0 && <>
           <div className="mini-label" style={{ marginTop: 18 }}>นัดหมายที่เกี่ยวข้อง</div>
@@ -96,6 +105,11 @@ export default function ProjectDetail({ id, onClose, onEdit, onDelete }) {
         </>}
       </div>
       <div className="modal-foot"><button className="btn" onClick={onClose}>ปิด</button></div>
+      {taskForm !== undefined && <TaskForm id={taskForm}
+        initialProjectId={id}
+        lockProject
+        onClose={() => setTaskForm(undefined)}
+        onSaved={() => { setTaskForm(undefined); reload() }} />}
     </Modal>
   )
 }

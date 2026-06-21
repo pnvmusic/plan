@@ -33,14 +33,61 @@ export const deleteProject = (id) =>
 export const getTasks = () =>
   supabase.from('tasks').select('*').order('created_at').then(handle)
 
+async function syncTaskDeadlineEvent(task) {
+  const { data: existing, error: findError } = await supabase
+    .from('events')
+    .select('id')
+    .eq('task_id', task.id)
+    .maybeSingle()
+  if (findError) throw findError
+
+  if (!task.deadline) {
+    if (existing?.id) await deleteEvent(existing.id)
+    return null
+  }
+
+  const eventRow = {
+    title: `Deadline: ${task.title}`,
+    type: 'deadline',
+    date: task.deadline,
+    time: '',
+    end_time: '',
+    studio: '',
+    project_id: task.project_id,
+    task_id: task.id,
+    attendees: task.assignee_id ? [task.assignee_id] : [],
+    note: '',
+  }
+
+  return existing?.id
+    ? updateEvent(existing.id, eventRow)
+    : createEvent(eventRow)
+}
+
 export const createTask = (row) =>
-  supabase.from('tasks').insert(row).select().single().then(handle)
+  supabase.from('tasks').insert(row).select().single().then(async (result) => {
+    const task = handle(result)
+    await syncTaskDeadlineEvent(task)
+    return task
+  })
 
 export const updateTask = (id, patch) =>
-  supabase.from('tasks').update(patch).eq('id', id).select().single().then(handle)
+  supabase.from('tasks').update(patch).eq('id', id).select().single().then(async (result) => {
+    const task = handle(result)
+    await syncTaskDeadlineEvent(task)
+    return task
+  })
 
-export const deleteTask = (id) =>
-  supabase.from('tasks').delete().eq('id', id).then(handle)
+export const deleteTask = async (id) => {
+  const { data: existing, error: findError } = await supabase
+    .from('events')
+    .select('id')
+    .eq('task_id', id)
+    .maybeSingle()
+  if (findError) throw findError
+  if (existing?.id) await deleteEvent(existing.id)
+  return supabase.from('tasks').delete().eq('id', id).then(handle)
+}
 
 // ---------- EVENTS ----------
 export const getEvents = () =>
