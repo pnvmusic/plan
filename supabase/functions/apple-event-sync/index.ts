@@ -173,19 +173,27 @@ async function assertCalendarPermission(req: Request) {
     })
   }
   const token = auth.replace(/^bearer\s+/i, '')
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_ANON_KEY')!,
-    { global: { headers: { authorization: auth } } },
-  )
-  const { data: userRes, error: userError } = await supabase.auth.getUser(token)
+  const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
+  const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!
+
+  // client สำหรับ getUser ต้อง "ไม่" มี global authorization header
+  // มิฉะนั้น header จะชนกับ jwt param → Authorization ซ้ำ → GoTrue ปฏิเสธ (401)
+  const authClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+  const { data: userRes, error: userError } = await authClient.auth.getUser(token)
   if (userError || !userRes?.user) {
-    throw new Response(JSON.stringify({ ok: false, error: 'MuseFlow session expired. Please sign in again.' }), {
+    throw new Response(JSON.stringify({
+      ok: false,
+      error: `auth: ${userError?.status ?? '?'} ${userError?.name ?? ''} ${userError?.message ?? 'no user'}`.trim(),
+    }), {
       status: 401,
       headers: { ...corsHeaders, 'content-type': 'application/json' },
     })
   }
 
+  // client แยกสำหรับ query profiles ผ่าน RLS (ใช้ global header ได้ เพราะ .from ไม่ส่ง jwt param)
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    global: { headers: { authorization: auth } },
+  })
   const { data: profile, error } = await supabase
     .from('profiles')
     .select('role')
