@@ -30,10 +30,6 @@ const textOf = (block: string, name: string) =>
 const hrefIn = (block: string, name: string) => textOf(textOf(block, name), 'href')
 
 const responseBlocks = (body: string) => [...body.matchAll(/<[^:>]*:?response[\s\S]*?<\/[^:>]*:?response>/gi)].map((m) => m[0])
-const escXml = (s = '') => String(s)
-  .replace(/&/g, '&amp;')
-  .replace(/</g, '&lt;')
-  .replace(/>/g, '&gt;')
 
 function absoluteUrl(href: string) {
   return new URL(unescapeXml(href), CALDAV_BASE).toString()
@@ -94,33 +90,14 @@ async function discoverCalendarUrl() {
   const exact = calendars.find((x) => x.name === wanted)
   const loose = calendars.find((x) => x.name.toLowerCase() === wanted.toLowerCase())
   const found = exact || loose
-  if (!found) throw new Error(`Apple calendar "${wanted}" not found`)
+  if (!found) throw new Error(`Apple calendar "${wanted}" not found. Available: ${calendars.map((c) => c.name).join(', ') || '(none)'}`)
   return absoluteUrl(found.href).replace(/\/?$/, '/')
 }
 
-async function findEventUrlByUid(calendarUrl: string, uid: string) {
-  if (!uid) throw new Error('Apple event UID ว่าง — ไม่สามารถค้นหา event ใน iCloud ได้')
-  const res = await caldav(
-    calendarUrl,
-    'REPORT',
-    xml(`<c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
-      <d:prop><d:getetag /><c:calendar-data /></d:prop>
-      <c:filter>
-        <c:comp-filter name="VCALENDAR">
-          <c:comp-filter name="VEVENT">
-            <c:prop-filter name="UID">
-              <c:text-match>${escXml(uid)}</c:text-match>
-            </c:prop-filter>
-          </c:comp-filter>
-        </c:comp-filter>
-      </c:filter>
-    </c:calendar-query>`),
-  )
-  const block = responseBlocks(await res.text())[0]
-  const href = block ? textOf(block, 'href') : ''
-  if (!href) throw new Error(`Apple event "${uid}" not found`)
-  return absoluteUrl(href)
-}
+// iCloud เก็บแต่ละ event ไว้ที่ resource URL = {calendar}/{uid}.ics
+// จึงไม่ต้องใช้ calendar-query REPORT (ซึ่ง iCloud ตอบ 412 บ่อย) — สร้าง URL จาก UID ตรงๆ
+const externalEventUrl = (calendarUrl: string, uid: string) =>
+  `${calendarUrl}${encodeURIComponent(uid)}.ics`
 
 const pad = (n: number) => String(n).padStart(2, '0')
 const compactDate = (date: Date) =>
@@ -222,13 +199,29 @@ Deno.serve(async (req) => {
     const eventUrl = event?.id ? `${calendarUrl}${appleUid(event.id)}.ics` : ''
 
     if (action === 'deleteExternal') {
-      const externalUrl = await findEventUrlByUid(calendarUrl, event.uid)
-      await caldav(externalUrl, 'DELETE')
+      if (!event.uid) throw new Error('Apple event UID ว่าง — ลบไม่ได้')
+      // caldav() ถือว่า DELETE ที่เจอ 404 = สำเร็จ (event ถูกลบไปแล้ว)
+      await caldav(externalEventUrl(calendarUrl, event.uid), 'DELETE')
       return Response.json({ ok: true }, { headers: corsHeaders })
     }
 
     if (action === 'updateExternal') {
-      const externalUrl = await findEventUrlByUid(calendarUrl, event.uid)
+      if (!event.uid) throw new Error('Apple event UID ว่าง — แก้ไขไม่ได้')
+      const externalUrl = externalEventUrl(calendarUrl, event.uid)
+
+      // เช็คก่อนว่ามี event นี้อยู่จริงในปฏิทินที่เราเขียน — กันสร้าง duplicate
+      // ถ้า published feed (ที่อ่าน) เป็นคนละปฏิทินกับ APPLE_CALENDAR_NAME (ที่เขียน)
+      const exists = await fetch(externalUrl, {
+        method: 'GET',
+        redirect: 'follow',
+        headers: { authorization: authHeader() },
+      })
+      await exists.body?.cancel()
+      if (exists.status === 404) {
+        throw new Error(`หา event นี้ในปฏิทิน iCloud "${Deno.env.get('APPLE_CALENDAR_NAME')}" ไม่เจอ — ปฏิทินที่อ่าน (published feed) อาจไม่ใช่ปฏิทินเดียวกับที่เขียน`)
+      }
+      if (!exists.ok) throw new Error(`Apple CalDAV GET(external) failed (${exists.status})`)
+
       const res = await fetch(externalUrl, {
         method: 'PUT',
         redirect: 'follow',
@@ -238,7 +231,10 @@ Deno.serve(async (req) => {
         },
         body: toIcs(event, event.uid),
       })
-      if (!res.ok) throw new Error(`Apple CalDAV PUT failed (${res.status})`)
+      if (!res.ok) {
+        const errBody = await res.text().catch(() => '')
+        throw new Error(`Apple CalDAV PUT(external) failed (${res.status})${errBody ? ' — ' + errBody.replace(/\s+/g, ' ').slice(0, 200) : ''}`)
+      }
       return Response.json({ ok: true }, { headers: corsHeaders })
     }
 
@@ -260,7 +256,8 @@ Deno.serve(async (req) => {
         body: toIcs(event),
       })
       if (!res.ok && !(action === 'create' && res.status === 412)) {
-        throw new Error(`Apple CalDAV PUT failed (${res.status})`)
+        const errBody = await res.text().catch(() => '')
+        throw new Error(`Apple CalDAV PUT failed (${res.status})${errBody ? ' — ' + errBody.replace(/\s+/g, ' ').slice(0, 200) : ''}`)
       }
       if (action === 'create' && res.status === 412) {
         await fetch(eventUrl, {
@@ -279,6 +276,8 @@ Deno.serve(async (req) => {
     throw new Error('Unknown action')
   } catch (err) {
     if (err instanceof Response) return err
+    // log เฉพาะข้อความ error (เป็น CalDAV protocol XML — ไม่มี credential) เพื่อดีบักจาก logs
+    console.error('[apple-event-sync]', err?.message || String(err))
     return Response.json({ ok: false, error: err?.message || 'Apple sync failed' }, {
       status: 500,
       headers: corsHeaders,
