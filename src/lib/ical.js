@@ -121,21 +121,23 @@ export function parseIcsEvents(ics) {
   return events.sort((a, b) => (a.date + a.time + a.title).localeCompare(b.date + b.time + b.title))
 }
 
-export async function getAppleCalendarEvents() {
+export async function getAppleCalendarEvents({ refresh = false } = {}) {
   const url = toHttpCalendarUrl(ICLOUD_CALENDAR_URL)
-  const sameOrigin = await fetch(LOCAL_PROXY_URL).catch(() => null)
+  const cacheBust = refresh ? `?t=${Date.now()}` : ''
+  const fetchOptions = refresh ? { cache: 'no-store' } : undefined
+  const sameOrigin = await fetch(LOCAL_PROXY_URL + cacheBust, fetchOptions).catch(() => null)
   if (sameOrigin?.ok) return parseIcsEvents(await sameOrigin.text())
 
   if (SUPABASE_FUNCTION_URL) {
-    const supabaseProxy = await fetch(SUPABASE_FUNCTION_URL).catch(() => null)
+    const supabaseProxy = await fetch(SUPABASE_FUNCTION_URL + cacheBust, fetchOptions).catch(() => null)
     if (supabaseProxy?.ok) return parseIcsEvents(await supabaseProxy.text())
   }
 
-  const direct = await fetch(url, { mode: 'cors' }).catch(() => null)
+  const direct = await fetch(refresh ? `${url}?t=${Date.now()}` : url, { mode: 'cors', ...(fetchOptions || {}) }).catch(() => null)
   if (direct?.ok) return parseIcsEvents(await direct.text())
 
   const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
-  const proxied = await fetch(proxyUrl).catch(() => null)
+  const proxied = await fetch(refresh ? `${proxyUrl}&t=${Date.now()}` : proxyUrl, fetchOptions).catch(() => null)
   if (!proxied) throw new Error('โหลดปฏิทิน Apple ไม่สำเร็จ: browser ถูกบล็อกการดึงข้อมูลข้ามโดเมน')
   if (!proxied.ok) throw new Error('โหลดปฏิทิน Apple ไม่สำเร็จ')
   return parseIcsEvents(await proxied.text())

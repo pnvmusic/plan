@@ -21,7 +21,7 @@ const evIcon = (e) => e.external ? APPLE_ICON : EV_ICON[e.type]
 const appleUidForLocal = (id) => `museflow-${id}@museflow.app`
 
 export default function Calendar() {
-  const { events } = useData()
+  const { events, reload } = useData()
   const { can } = useAuth()
   const toast = useToast()
   const [params, setParams] = useSearchParams()
@@ -40,10 +40,10 @@ export default function Calendar() {
     if (open) { setDetailId(open); params.delete('open'); setParams(params, { replace: true }) }
   }, []) // eslint-disable-line
 
-  const loadAppleEvents = useCallback(() => {
+  const loadAppleEvents = useCallback((options) => {
     let alive = true
     setAppleState({ loading: true, error: '' })
-    getAppleCalendarEvents()
+    getAppleCalendarEvents(options)
       .then((items) => {
         if (!alive) return
         setAppleEvents(items)
@@ -58,6 +58,12 @@ export default function Calendar() {
   }, [])
 
   useEffect(() => loadAppleEvents(), [loadAppleEvents])
+
+  const refreshCalendar = async () => {
+    await reload()
+    loadAppleEvents({ refresh: true })
+    toast('รีเฟรชปฏิทินแล้ว')
+  }
 
   const localAppleUids = new Set(events.map((e) => appleUidForLocal(e.id)))
   const visibleAppleEvents = appleEvents.filter((e) => !localAppleUids.has(e.uid))
@@ -117,6 +123,9 @@ export default function Calendar() {
         <button className="btn btn-sm" onClick={() => nav(1)}>›</button>
         <div style={{ fontWeight: 600, fontSize: 15, marginLeft: 6 }}>{label}</div>
         <div style={{ flex: 1 }} />
+        <button className="btn btn-sm" disabled={appleState.loading} onClick={refreshCalendar}>
+          {appleState.loading ? 'กำลังโหลด...' : '↻ รีเฟรช'}
+        </button>
         <div className="seg">
           <button className={view === 'month' ? 'on' : ''} onClick={() => setView('month')}>เดือน</button>
           <button className={view === 'week' ? 'on' : ''} onClick={() => setView('week')}>สัปดาห์</button>
