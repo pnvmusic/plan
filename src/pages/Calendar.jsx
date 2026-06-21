@@ -16,6 +16,7 @@ const APPLE_LABEL = 'Apple Calendar'
 
 const evColor = (e) => e.external ? APPLE_COLOR : EV_COLOR[e.type]
 const evIcon = (e) => e.external ? APPLE_ICON : EV_ICON[e.type]
+const appleUidForLocal = (id) => `museflow-${id}@museflow.app`
 
 export default function Calendar() {
   const { events } = useData()
@@ -52,7 +53,10 @@ export default function Calendar() {
     return () => { alive = false }
   }, [])
 
-  const evOn = (ds) => [...events, ...appleEvents]
+  const localAppleUids = new Set(events.map((e) => appleUidForLocal(e.id)))
+  const visibleAppleEvents = appleEvents.filter((e) => !localAppleUids.has(e.uid))
+
+  const evOn = (ds) => [...events, ...visibleAppleEvents]
     .filter((e) => e.date === ds)
     .sort((a, b) => ((a.time || '00:00') + a.title).localeCompare((b.time || '00:00') + b.title))
 

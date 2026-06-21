@@ -15,7 +15,11 @@ export default function EventDetail({ id, onClose, onEdit }) {
 
   const remove = async () => {
     if (!window.confirm('ลบนัดหมายนี้?')) return
-    await api.deleteEvent(id); await reload(); toast('ลบนัดหมายแล้ว'); onClose()
+    let syncError = null
+    try { await api.syncAppleEvent('delete', e) } catch (err) { syncError = err }
+    await api.deleteEvent(id); await reload()
+    toast(syncError ? 'ลบนัดหมายแล้ว แต่ลบใน Apple ไม่สำเร็จ: ' + syncError.message : 'ลบนัดหมายแล้ว และ sync ไป Apple Calendar แล้ว')
+    onClose()
   }
 
   return (

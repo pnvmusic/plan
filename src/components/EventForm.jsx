@@ -33,9 +33,13 @@ export default function EventForm({ initial, onClose, onSaved }) {
         title: f.title.trim(), type: f.type, date: f.date, time: f.time, end_time: f.end_time,
         studio: f.studio, project_id: f.project_id || null, attendees: f.attendees, note: f.note,
       }
-      if (isEdit) await api.updateEvent(initial, row)
-      else await api.createEvent(row)
-      toast(isEdit ? 'บันทึกแล้ว' : 'เพิ่มนัดหมายแล้ว')
+      const saved = isEdit ? await api.updateEvent(initial, row) : await api.createEvent(row)
+      try {
+        await api.syncAppleEvent(isEdit ? 'update' : 'create', saved)
+        toast(isEdit ? 'บันทึกแล้ว และ sync ไป Apple Calendar แล้ว' : 'เพิ่มนัดหมายแล้ว และ sync ไป Apple Calendar แล้ว')
+      } catch (syncError) {
+        toast((isEdit ? 'บันทึกแล้ว' : 'เพิ่มนัดหมายแล้ว') + ' แต่ sync Apple ไม่สำเร็จ: ' + syncError.message)
+      }
       await reload(); onSaved()
     } catch (e) { toast('ผิดพลาด: ' + e.message) } finally { setBusy(false) }
   }

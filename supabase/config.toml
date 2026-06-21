@@ -1,2 +1,5 @@
 [functions.apple-calendar]
 verify_jwt = false
+
+[functions.apple-event-sync]
+verify_jwt = true

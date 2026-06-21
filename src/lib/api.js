@@ -55,6 +55,15 @@ export const updateEvent = (id, patch) =>
 export const deleteEvent = (id) =>
   supabase.from('events').delete().eq('id', id).then(handle)
 
+export async function syncAppleEvent(action, event) {
+  const { data, error } = await supabase.functions.invoke('apple-event-sync', {
+    body: { action, event },
+  })
+  if (error) throw error
+  if (data?.ok === false) throw new Error(data.error || 'Apple Calendar sync failed')
+  return data
+}
+
 // ---------- EXPENSES ----------
 export const getExpenses = () =>
   supabase.from('expenses').select('*').order('date', { ascending: false }).then(handle)
