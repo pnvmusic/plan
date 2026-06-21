@@ -30,6 +30,10 @@ const textOf = (block: string, name: string) =>
 const hrefIn = (block: string, name: string) => textOf(textOf(block, name), 'href')
 
 const responseBlocks = (body: string) => [...body.matchAll(/<[^:>]*:?response[\s\S]*?<\/[^:>]*:?response>/gi)].map((m) => m[0])
+const escXml = (s = '') => String(s)
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
 
 function absoluteUrl(href: string) {
   return new URL(unescapeXml(href), CALDAV_BASE).toString()
@@ -41,7 +45,7 @@ async function caldav(url: string, method: string, body?: string, extraHeaders =
     redirect: 'follow',
     headers: {
       authorization: authHeader(),
-      depth: method === 'PROPFIND' ? '1' : '0',
+      depth: ['PROPFIND', 'REPORT'].includes(method) ? '1' : '0',
       'content-type': 'application/xml; charset=utf-8',
       ...extraHeaders,
     },
@@ -93,6 +97,29 @@ async function discoverCalendarUrl() {
   return absoluteUrl(found.href).replace(/\/?$/, '/')
 }
 
+async function findEventUrlByUid(calendarUrl: string, uid: string) {
+  const res = await caldav(
+    calendarUrl,
+    'REPORT',
+    xml(`<c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
+      <d:prop><d:getetag /><c:calendar-data /></d:prop>
+      <c:filter>
+        <c:comp-filter name="VCALENDAR">
+          <c:comp-filter name="VEVENT">
+            <c:prop-filter name="UID">
+              <c:text-match collation="i;octet">${escXml(uid)}</c:text-match>
+            </c:prop-filter>
+          </c:comp-filter>
+        </c:comp-filter>
+      </c:filter>
+    </c:calendar-query>`),
+  )
+  const block = responseBlocks(await res.text())[0]
+  const href = block ? textOf(block, 'href') : ''
+  if (!href) throw new Error(`Apple event "${uid}" not found`)
+  return absoluteUrl(href)
+}
+
 const pad = (n: number) => String(n).padStart(2, '0')
 const compactDate = (date: Date) =>
   `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}T${pad(date.getHours())}${pad(date.getMinutes())}00`
@@ -115,10 +142,9 @@ function addHour(date: Date) {
   return d
 }
 
-function toIcs(event: Record<string, any>) {
+function toIcs(event: Record<string, any>, uid = appleUid(event.id)) {
   const start = eventDate(event.date, event.time)
   const end = event.end_time ? eventDate(event.date, event.end_time) : addHour(start)
-  const uid = appleUid(event.id)
   return [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
@@ -165,10 +191,31 @@ Deno.serve(async (req) => {
   try {
     await assertCalendarPermission(req)
     const { action, event } = await req.json()
-    if (!event?.id) throw new Error('Missing event.id')
+    if (!event?.id && !event?.uid) throw new Error('Missing event id')
 
     const calendarUrl = await discoverCalendarUrl()
-    const eventUrl = `${calendarUrl}${appleUid(event.id)}.ics`
+    const eventUrl = event?.id ? `${calendarUrl}${appleUid(event.id)}.ics` : ''
+
+    if (action === 'deleteExternal') {
+      const externalUrl = await findEventUrlByUid(calendarUrl, event.uid)
+      await caldav(externalUrl, 'DELETE')
+      return Response.json({ ok: true }, { headers: corsHeaders })
+    }
+
+    if (action === 'updateExternal') {
+      const externalUrl = await findEventUrlByUid(calendarUrl, event.uid)
+      const res = await fetch(externalUrl, {
+        method: 'PUT',
+        redirect: 'follow',
+        headers: {
+          authorization: authHeader(),
+          'content-type': 'text/calendar; charset=utf-8',
+        },
+        body: toIcs(event, event.uid),
+      })
+      if (!res.ok) throw new Error(`Apple CalDAV PUT failed (${res.status})`)
+      return Response.json({ ok: true }, { headers: corsHeaders })
+    }
 
     if (action === 'delete') {
       await caldav(eventUrl, 'DELETE')

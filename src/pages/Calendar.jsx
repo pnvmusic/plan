@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useData } from '../context/DataContext'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from '../context/ToastContext'
 import { EV_COLOR, EV_ICON, EV_LABEL } from '../lib/constants'
 import { thDate, thDateLong, ymd, todayISO } from '../lib/format'
 import { getAppleCalendarEvents } from '../lib/ical'
+import * as api from '../lib/api'
 import { Linkify, Modal } from '../components/ui'
 import EventDetail from '../components/EventDetail'
 import EventForm from '../components/EventForm'
@@ -21,11 +23,13 @@ const appleUidForLocal = (id) => `museflow-${id}@museflow.app`
 export default function Calendar() {
   const { events } = useData()
   const { can } = useAuth()
+  const toast = useToast()
   const [params, setParams] = useSearchParams()
   const [view, setView] = useState('month')
   const [cursor, setCursor] = useState(todayISO())
   const [detailId, setDetailId] = useState(null)
   const [externalDetail, setExternalDetail] = useState(null)
+  const [externalForm, setExternalForm] = useState(null)
   const [appleEvents, setAppleEvents] = useState([])
   const [appleState, setAppleState] = useState({ loading: true, error: '' })
   const [form, setForm] = useState(undefined) // undefined=closed; {} or {date} = new; id string = edit
@@ -36,7 +40,7 @@ export default function Calendar() {
     if (open) { setDetailId(open); params.delete('open'); setParams(params, { replace: true }) }
   }, []) // eslint-disable-line
 
-  useEffect(() => {
+  const loadAppleEvents = useCallback(() => {
     let alive = true
     setAppleState({ loading: true, error: '' })
     getAppleCalendarEvents()
@@ -53,6 +57,8 @@ export default function Calendar() {
     return () => { alive = false }
   }, [])
 
+  useEffect(() => loadAppleEvents(), [loadAppleEvents])
+
   const localAppleUids = new Set(events.map((e) => appleUidForLocal(e.id)))
   const visibleAppleEvents = appleEvents.filter((e) => !localAppleUids.has(e.uid))
 
@@ -61,6 +67,30 @@ export default function Calendar() {
     .sort((a, b) => ((a.time || '00:00') + a.title).localeCompare((b.time || '00:00') + b.title))
 
   const openEvent = (e) => e.external ? setExternalDetail(e) : setDetailId(e.id)
+
+  const saveExternalEvent = async (event) => {
+    try {
+      await api.syncAppleEvent('updateExternal', event)
+      toast('แก้ไข Apple Calendar แล้ว')
+      setExternalForm(null)
+      setExternalDetail(null)
+      loadAppleEvents()
+    } catch (e) {
+      toast('แก้ไข Apple Calendar ไม่สำเร็จ: ' + e.message)
+    }
+  }
+
+  const deleteExternalEvent = async (event) => {
+    if (!window.confirm('ลบนัดหมายนี้จาก Apple Calendar?')) return
+    try {
+      await api.syncAppleEvent('deleteExternal', event)
+      toast('ลบจาก Apple Calendar แล้ว')
+      setExternalDetail(null)
+      loadAppleEvents()
+    } catch (e) {
+      toast('ลบจาก Apple Calendar ไม่สำเร็จ: ' + e.message)
+    }
+  }
 
   const nav = (dir) => {
     const d = new Date(cursor)
@@ -117,7 +147,13 @@ export default function Calendar() {
 
       {detailId && <EventDetail id={detailId} onClose={() => setDetailId(null)}
         onEdit={(id) => { setDetailId(null); setForm(id) }} />}
-      {externalDetail && <ExternalEventDetail event={externalDetail} onClose={() => setExternalDetail(null)} />}
+      {externalDetail && <ExternalEventDetail event={externalDetail} canEdit={can('calendar')}
+        onEdit={() => { setExternalForm(externalDetail); setExternalDetail(null) }}
+        onDelete={() => deleteExternalEvent(externalDetail)}
+        onClose={() => setExternalDetail(null)} />}
+      {externalForm && <ExternalEventForm event={externalForm}
+        onClose={() => setExternalForm(null)}
+        onSaved={saveExternalEvent} />}
       {form !== undefined && <EventForm initial={form}
         onClose={() => setForm(undefined)} onSaved={() => setForm(undefined)} />}
     </>
@@ -184,12 +220,14 @@ function DayView({ ds, evOn, onOpen }) {
   ))
 }
 
-function ExternalEventDetail({ event, onClose }) {
+function ExternalEventDetail({ event, canEdit, onEdit, onDelete, onClose }) {
   return (
     <Modal onClose={onClose}>
       <div className="modal-head"><span style={{ fontSize: 20 }}>{APPLE_ICON}</span>
         <div style={{ flex: 1 }}><h3>{event.title}</h3>
           <div style={{ fontSize: 12, color: 'var(--txt-2)', marginTop: 2 }}>{APPLE_LABEL}</div></div>
+        {canEdit && <button className="btn btn-sm" onClick={onEdit}>✏️ แก้ไข</button>}
+        {canEdit && <button className="btn btn-sm btn-ghost" style={{ color: 'var(--danger)' }} onClick={onDelete}>🗑</button>}
         <button className="icon-btn" onClick={onClose}>✕</button></div>
       <div className="modal-body">
         <div className="kv"><span className="k">📅 วันที่</span><span>{thDateLong(event.date)}</span></div>
@@ -200,6 +238,61 @@ function ExternalEventDetail({ event, onClose }) {
           <div style={{ fontSize: 13, marginTop: 5 }}><Linkify text={event.note} /></div></>}
       </div>
       <div className="modal-foot"><button className="btn" onClick={onClose}>ปิด</button></div>
+    </Modal>
+  )
+}
+
+function ExternalEventForm({ event, onClose, onSaved }) {
+  const [f, setF] = useState({
+    ...event,
+    studio: event.location || '',
+    end_time: event.endTime || '',
+    note: event.note || '',
+  })
+  const [busy, setBusy] = useState(false)
+  const set = (k, v) => setF((s) => ({ ...s, [k]: v }))
+
+  const save = async () => {
+    if (!f.title.trim()) return
+    setBusy(true)
+    try {
+      await onSaved({
+        ...f,
+        title: f.title.trim(),
+        location: f.studio || '',
+        endTime: f.end_time || '',
+      })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Modal onClose={onClose}>
+      <div className="modal-head"><span style={{ fontSize: 20 }}>{APPLE_ICON}</span>
+        <div style={{ flex: 1 }}><h3>แก้ไข Apple Calendar</h3>
+          <div style={{ fontSize: 12, color: 'var(--txt-2)', marginTop: 2 }}>{event.title}</div></div>
+        <button className="icon-btn" onClick={onClose}>✕</button></div>
+      <div className="modal-body">
+        <div className="form-grp"><label>ชื่อกิจกรรม *</label>
+          <input value={f.title} onChange={(e) => set('title', e.target.value)} /></div>
+        <div className="form-row">
+          <div className="form-grp"><label>วันที่</label>
+            <input type="date" value={f.date} onChange={(e) => set('date', e.target.value)} /></div>
+          <div className="form-grp"><label>เวลาเริ่ม</label>
+            <input type="time" value={f.time || ''} onChange={(e) => set('time', e.target.value)} /></div>
+        </div>
+        <div className="form-row">
+          <div className="form-grp"><label>เวลาสิ้นสุด</label>
+            <input type="time" value={f.end_time || ''} onChange={(e) => set('end_time', e.target.value)} /></div>
+          <div className="form-grp"><label>สถานที่</label>
+            <input value={f.studio || ''} onChange={(e) => set('studio', e.target.value)} /></div>
+        </div>
+        <div className="form-grp"><label>Note</label>
+          <textarea value={f.note || ''} onChange={(e) => set('note', e.target.value)} /></div>
+      </div>
+      <div className="modal-foot"><button className="btn" onClick={onClose}>ยกเลิก</button>
+        <button className="btn btn-primary" disabled={busy} onClick={save}>{busy ? 'กำลังบันทึก...' : 'บันทึก'}</button></div>
     </Modal>
   )
 }
