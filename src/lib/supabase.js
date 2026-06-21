@@ -16,3 +16,5 @@ export const supabase = createClient(url, anonKey, {
 
 export const isConfigured = Boolean(url && anonKey)
 export const FILES_BUCKET = 'museflow-files'
+export const SUPABASE_URL = url
+export const SUPABASE_ANON_KEY = anonKey

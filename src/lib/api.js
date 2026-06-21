@@ -1,4 +1,4 @@
-import { supabase, FILES_BUCKET } from './supabase'
+import { supabase, FILES_BUCKET, SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase'
 
 // ====================================================================
 // API SERVICE LAYER — ทุกการอ่าน/เขียนผ่าน Supabase (Postgres + RLS)
@@ -59,11 +59,18 @@ export async function syncAppleEvent(action, event) {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session?.access_token) throw new Error('กรุณาเข้าสู่ระบบใหม่ก่อน sync Apple Calendar')
 
-  const { data, error } = await supabase.functions.invoke('apple-event-sync', {
-    body: { action, event },
-    headers: { Authorization: `Bearer ${session.access_token}` },
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/apple-event-sync`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ action, event }),
   })
-  if (error) throw error
+  const text = await res.text()
+  const data = text ? JSON.parse(text) : null
+  if (!res.ok) throw new Error(data?.error || data?.message || text || 'Apple Calendar sync failed')
   if (data?.ok === false) throw new Error(data.error || 'Apple Calendar sync failed')
   return data
 }

@@ -166,13 +166,24 @@ function toIcs(event: Record<string, any>, uid = appleUid(event.id)) {
 
 async function assertCalendarPermission(req: Request) {
   const auth = req.headers.get('authorization') || ''
+  if (!auth.toLowerCase().startsWith('bearer ')) {
+    throw new Response(JSON.stringify({ ok: false, error: 'Missing MuseFlow session token' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'content-type': 'application/json' },
+    })
+  }
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_ANON_KEY')!,
     { global: { headers: { authorization: auth } } },
   )
   const { data: userRes, error: userError } = await supabase.auth.getUser()
-  if (userError || !userRes?.user) throw new Response('Unauthorized', { status: 401, headers: corsHeaders })
+  if (userError || !userRes?.user) {
+    throw new Response(JSON.stringify({ ok: false, error: 'MuseFlow session expired. Please sign in again.' }), {
+      status: 401,
+      headers: { ...corsHeaders, 'content-type': 'application/json' },
+    })
+  }
 
   const { data: profile, error } = await supabase
     .from('profiles')
@@ -180,7 +191,10 @@ async function assertCalendarPermission(req: Request) {
     .eq('id', userRes.user.id)
     .single()
   if (error || !['Admin', 'Manager'].includes(profile?.role)) {
-    throw new Response('Forbidden', { status: 403, headers: corsHeaders })
+    throw new Response(JSON.stringify({ ok: false, error: 'Only Admin or Manager can sync Apple Calendar.' }), {
+      status: 403,
+      headers: { ...corsHeaders, 'content-type': 'application/json' },
+    })
   }
 }
 
