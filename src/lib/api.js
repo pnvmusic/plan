@@ -111,8 +111,8 @@ async function syncTaskDeadlineEvent(task) {
     .maybeSingle()
   if (projectError) throw projectError
   const calendarTitle = project?.title
-    ? `Deadline: ${project.title} ${task.title}`
-    : `Deadline: ${task.title}`
+    ? `${project.title} ${task.title}`
+    : task.title
 
   const { data: existing, error: findError } = await supabase
     .from('events')

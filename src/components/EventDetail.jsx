@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useData } from '../context/DataContext'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
-import { EV_ICON, EV_LABEL } from '../lib/constants'
+import { eventIcon, eventLabel, eventTitle } from '../lib/constants'
 import { thDateLong } from '../lib/format'
 import { Avatar, Modal, Linkify } from './ui'
 import * as api from '../lib/api'
@@ -32,9 +32,9 @@ export default function EventDetail({ id, onClose, onEdit }) {
 
   return (
     <Modal onClose={onClose}>
-      <div className="modal-head"><span style={{ fontSize: 20 }}>{EV_ICON[e.type]}</span>
-        <div style={{ flex: 1 }}><h3>{e.title}</h3>
-          <div style={{ fontSize: 12, color: 'var(--txt-2)', marginTop: 2 }}>{EV_LABEL[e.type]}</div></div>
+      <div className="modal-head"><span style={{ fontSize: 20 }}>{eventIcon(e)}</span>
+        <div style={{ flex: 1 }}><h3>{eventTitle(e)}</h3>
+          <div style={{ fontSize: 12, color: 'var(--txt-2)', marginTop: 2 }}>{eventLabel(e)}</div></div>
         {can('calendar') && <button className="btn btn-sm" onClick={() => onEdit(id)}>✏️</button>}
         {can('calendar') && <button className="btn btn-sm btn-ghost" style={{ color: 'var(--danger)' }} onClick={remove}>🗑</button>}
         <button className="icon-btn" onClick={onClose}>✕</button></div>

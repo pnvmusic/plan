@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { useData } from '../context/DataContext'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
-import { EV_COLOR, EV_ICON, EV_LABEL } from '../lib/constants'
+import { EV_COLOR, EV_LABEL, eventColor, eventIcon, eventTitle } from '../lib/constants'
 import { thDate, thDateLong, ymd, todayISO } from '../lib/format'
 import { getAppleCalendarEvents } from '../lib/ical'
 import * as api from '../lib/api'
@@ -16,8 +16,8 @@ const APPLE_COLOR = '#CB30E0'
 const APPLE_ICON = '☁️'
 const APPLE_LABEL = 'Apple Calendar'
 
-const evColor = (e) => e.external ? APPLE_COLOR : EV_COLOR[e.type]
-const evIcon = (e) => e.external ? APPLE_ICON : EV_ICON[e.type]
+const evColor = (e) => e.external ? APPLE_COLOR : eventColor(e)
+const evIcon = (e) => e.external ? APPLE_ICON : eventIcon(e)
 const appleUidForLocal = (id) => `museflow-${id}@museflow.app`
 
 export default function Calendar() {
@@ -208,7 +208,7 @@ function MonthView({ c, today, evOn, onOpen, onAdd }) {
         <span className="cal-num">{d.getDate()}</span>
         {evs.slice(0, 3).map((e) => (
           <button key={e.id} className="cal-ev" style={{ background: evColor(e) + '22', color: evColor(e) }}
-            onClick={() => onOpen(e)}>{evIcon(e)} {e.time} {e.title}</button>
+            onClick={() => onOpen(e)}>{evIcon(e)} {e.time} {eventTitle(e)}</button>
         ))}
         {evs.length > 3 && <div style={{ fontSize: 10, color: 'var(--txt-2)' }}>+{evs.length - 3} เพิ่มเติม</div>}
       </div>
@@ -229,7 +229,7 @@ function WeekView({ c, today, evOn, onOpen, onAdd }) {
         <div style={{ fontSize: 11, color: 'var(--txt-2)', textAlign: 'center', marginBottom: 4 }}>{DOW[i]} {d.getDate()}</div>
         {evs.map((e) => (
           <button key={e.id} className="cal-ev" style={{ background: evColor(e) + '22', color: evColor(e), whiteSpace: 'normal' }}
-            onClick={() => onOpen(e)}>{e.time} {evIcon(e)}<br />{e.title}</button>
+            onClick={() => onOpen(e)}>{e.time} {evIcon(e)}<br />{eventTitle(e)}</button>
         ))}
       </div>
     )
@@ -245,7 +245,7 @@ function DayView({ ds, evOn, onOpen }) {
     <div key={e.id} className="list-row" style={{ cursor: 'pointer' }} onClick={() => onOpen(e)}>
       <div style={{ width: 60, fontWeight: 600, fontSize: 13 }}>{e.time}</div>
       <div className="stat-ico" style={{ width: 36, height: 36, margin: 0, background: evColor(e) + '22', color: evColor(e) }}>{evIcon(e)}</div>
-      <div style={{ flex: 1 }}><div style={{ fontWeight: 600, fontSize: 14 }}>{e.title}</div>
+      <div style={{ flex: 1 }}><div style={{ fontWeight: 600, fontSize: 14 }}>{eventTitle(e)}</div>
         <div style={{ fontSize: 12, color: 'var(--txt-2)' }}>{e.external ? (e.location || APPLE_LABEL) : (e.studio || '—')}</div></div>
       {!e.external && <div className="av-stack">{(e.attendees || []).map((a) => (
         <div key={a} className="avatar" style={{ width: 26, height: 26, fontSize: 10, background: profile(a).color }}>{profile(a).initials}</div>

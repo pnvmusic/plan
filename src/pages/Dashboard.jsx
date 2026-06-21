@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useData } from '../context/DataContext'
-import { stage, EV_COLOR, EV_ICON } from '../lib/constants'
+import { stage, eventColor, eventIcon, eventTitle } from '../lib/constants'
 import { fmtMoney, daysBetween, thDate, todayISO } from '../lib/format'
 import { getAppleCalendarEvents } from '../lib/ical'
 import { Badge, Progress } from '../components/ui'
@@ -116,12 +116,12 @@ export default function Dashboard() {
                   ? `/calendar?date=${e.date}&open=${encodeURIComponent(e.id)}`
                   : '/calendar?open=' + e.id)}>
                 <div className="stat-ico" style={{ width: 34, height: 34, margin: 0, fontSize: 15,
-                  background: (e.external ? APPLE_COLOR : EV_COLOR[e.type]) + '22',
-                  color: e.external ? APPLE_COLOR : EV_COLOR[e.type] }}>
-                  {e.external ? APPLE_ICON : EV_ICON[e.type]}
+                  background: (e.external ? APPLE_COLOR : eventColor(e)) + '22',
+                  color: e.external ? APPLE_COLOR : eventColor(e) }}>
+                  {e.external ? APPLE_ICON : eventIcon(e)}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{e.title}</div>
+                  <div style={{ fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{eventTitle(e)}</div>
                   <div style={{ fontSize: 11, color: 'var(--txt-2)' }}>
                     {thDate(e.date)} · {e.allDay ? 'ทั้งวัน' : e.time}{e.external
                       ? ` · ${e.location || APPLE_LABEL}`

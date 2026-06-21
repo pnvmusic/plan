@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useData } from '../context/DataContext'
 import { useAuth } from '../context/AuthContext'
-import { stage, PRIORITY, EV_ICON } from '../lib/constants'
+import { stage, PRIORITY, eventIcon, eventTitle } from '../lib/constants'
 import { fmtMoney, thDate, thDateLong } from '../lib/format'
 import { Avatar, Badge, Progress, Modal, Linkify, parseRef } from './ui'
 import TaskForm from './TaskForm'
@@ -88,7 +88,7 @@ export default function ProjectDetail({ id, onClose, onEdit, onDelete }) {
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 13, ...(t.done ? { textDecoration: 'line-through', color: 'var(--txt-2)' } : {}) }}>{t.title}</div>
                 <div style={{ fontSize: 11, color: 'var(--txt-2)' }}>
-                  {stage(t.stage).label} · {t.deadline ? `🔥 ${thDate(t.deadline)}` : 'ยังไม่กำหนด deadline'}
+                  {stage(t.stage).label} · {t.deadline ? `☑️ ${thDate(t.deadline)}` : 'ยังไม่กำหนด deadline'}
                 </div>
               </div>
               <Badge text={t.priority} color={PRIORITY[t.priority]} />
@@ -100,8 +100,8 @@ export default function ProjectDetail({ id, onClose, onEdit, onDelete }) {
         {evs.length > 0 && <>
           <div className="mini-label" style={{ marginTop: 18 }}>นัดหมายที่เกี่ยวข้อง</div>
           {evs.map((e) => (
-            <div key={e.id} className="list-row"><span>{EV_ICON[e.type]}</span>
-              <div style={{ flex: 1 }}><div style={{ fontSize: 13 }}>{e.title}</div>
+            <div key={e.id} className="list-row"><span>{eventIcon(e)}</span>
+              <div style={{ flex: 1 }}><div style={{ fontSize: 13 }}>{eventTitle(e)}</div>
                 <div style={{ fontSize: 11, color: 'var(--txt-2)' }}>{thDate(e.date)} {e.time}</div></div></div>
           ))}
         </>}
