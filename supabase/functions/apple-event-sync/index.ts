@@ -172,12 +172,13 @@ async function assertCalendarPermission(req: Request) {
       headers: { ...corsHeaders, 'content-type': 'application/json' },
     })
   }
+  const token = auth.replace(/^bearer\s+/i, '')
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_ANON_KEY')!,
     { global: { headers: { authorization: auth } } },
   )
-  const { data: userRes, error: userError } = await supabase.auth.getUser()
+  const { data: userRes, error: userError } = await supabase.auth.getUser(token)
   if (userError || !userRes?.user) {
     throw new Response(JSON.stringify({ ok: false, error: 'MuseFlow session expired. Please sign in again.' }), {
       status: 401,
