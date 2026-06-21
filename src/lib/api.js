@@ -35,6 +35,16 @@ export const getTasks = () =>
 
 async function syncTaskDeadlineEvent(task) {
   let appleSyncError = null
+  const { data: project, error: projectError } = await supabase
+    .from('projects')
+    .select('title')
+    .eq('id', task.project_id)
+    .maybeSingle()
+  if (projectError) throw projectError
+  const calendarTitle = project?.title
+    ? `Deadline: ${project.title} ${task.title}`
+    : `Deadline: ${task.title}`
+
   const { data: existing, error: findError } = await supabase
     .from('events')
     .select('*')
@@ -51,7 +61,7 @@ async function syncTaskDeadlineEvent(task) {
   }
 
   const eventRow = {
-    title: `Deadline: ${task.title}`,
+    title: calendarTitle,
     type: 'deadline',
     date: task.deadline,
     time: '',
