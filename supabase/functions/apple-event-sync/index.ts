@@ -100,6 +100,7 @@ const externalEventUrl = (calendarUrl: string, uid: string) =>
   `${calendarUrl}${encodeURIComponent(uid)}.ics`
 
 const pad = (n: number) => String(n).padStart(2, '0')
+const compactDay = (date: string) => date.replace(/-/g, '')
 const compactDate = (date: Date) =>
   `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}T${pad(date.getHours())}${pad(date.getMinutes())}00`
 const stamp = () => new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '')
@@ -121,7 +122,15 @@ function addHour(date: Date) {
   return d
 }
 
+function addDay(date: string) {
+  const [y, m, d] = date.split('-').map(Number)
+  const next = new Date(y, m - 1, d)
+  next.setDate(next.getDate() + 1)
+  return `${next.getFullYear()}-${pad(next.getMonth() + 1)}-${pad(next.getDate())}`
+}
+
 function toIcs(event: Record<string, any>, uid = appleUid(event.id)) {
+  const isAllDay = !event.time
   const start = eventDate(event.date, event.time)
   const end = event.end_time ? eventDate(event.date, event.end_time) : addHour(start)
   return [
@@ -132,8 +141,8 @@ function toIcs(event: Record<string, any>, uid = appleUid(event.id)) {
     'BEGIN:VEVENT',
     `UID:${uid}`,
     `DTSTAMP:${stamp()}`,
-    `DTSTART;TZID=${TZID}:${compactDate(start)}`,
-    `DTEND;TZID=${TZID}:${compactDate(end)}`,
+    isAllDay ? `DTSTART;VALUE=DATE:${compactDay(event.date)}` : `DTSTART;TZID=${TZID}:${compactDate(start)}`,
+    isAllDay ? `DTEND;VALUE=DATE:${compactDay(addDay(event.date))}` : `DTEND;TZID=${TZID}:${compactDate(end)}`,
     `SUMMARY:${escIcs(event.title || 'MuseFlow event')}`,
     event.studio ? `LOCATION:${escIcs(event.studio)}` : '',
     event.note ? `DESCRIPTION:${escIcs(event.note)}` : '',
