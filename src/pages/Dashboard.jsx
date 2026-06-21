@@ -43,7 +43,7 @@ export default function Dashboard() {
         <Stat ico="🎼" color="#7c5cff" val={active} label="เพลงที่กำลังทำอยู่"
           trend={<div className="stat-trend" style={{ color: 'var(--txt-2)' }}>จากทั้งหมด {projects.length} เพลง</div>} />
         <Stat ico="✅" color="#3ddc91" val={released} label="เพลงที่เสร็จแล้ว / ปล่อยแล้ว" />
-        <Stat ico="⏰" color="#ffb020" val={nearDeadline.length} label="ใกล้ deadline (ภายใน 7 วัน)" />
+        <Stat ico="🔥" color="#ff5a6e" val={nearDeadline.length} label="ใกล้ deadline (ภายใน 7 วัน)" />
         <Stat ico="📝" color="#4aa8ff" val={openTasks} label="งานที่ค้างอยู่"
           trend={overdue ? <div className="stat-trend" style={{ color: 'var(--danger)' }}>⚠ เลยกำหนด {overdue} งาน</div> : null} />
       </div>
@@ -76,7 +76,7 @@ export default function Dashboard() {
                         <div style={{ fontSize: 11, color: 'var(--txt-2)' }}>{p.artist}</div></td>
                       <td><Badge text={s.label} color={s.color} /></td>
                       <td><div style={{ fontSize: 12 }}>🚀 {thDate(p.release_date)}</div>
-                        <div style={{ fontSize: 12 }}>📅 {thDate(p.deadline)}</div>
+                        <div style={{ fontSize: 12 }}>🔥 {thDate(p.deadline)}</div>
                         <div style={{ fontSize: 11 }}>{ddTxt}</div></td>
                       <td style={{ minWidth: 120 }}><Progress value={pr} />
                         <div style={{ fontSize: 11, color: 'var(--txt-2)', marginTop: 3 }}>{pr}%</div></td>

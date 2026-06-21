@@ -53,7 +53,7 @@ export default function ProjectDetail({ id, onClose, onEdit, onDelete }) {
           <div><div className="mini-label">Release date</div>
             <div style={{ marginTop: 8, fontSize: 13 }}>🚀 {thDateLong(p.release_date)}</div></div>
           <div><div className="mini-label">Deadline</div>
-            <div style={{ marginTop: 8, fontSize: 13 }}>📅 {thDateLong(p.deadline)}</div></div>
+            <div style={{ marginTop: 8, fontSize: 13 }}>🔥 {thDateLong(p.deadline)}</div></div>
         </div>
         {p.note && <><div className="mini-label" style={{ marginTop: 14 }}>Note</div>
           <div style={{ fontSize: 13, marginTop: 5 }}><Linkify text={p.note} /></div></>}
@@ -87,7 +87,7 @@ export default function ProjectDetail({ id, onClose, onEdit, onDelete }) {
                 onClick={(e) => { e.stopPropagation(); toggle(t) }}>{t.done ? '✓' : ''}</div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 13, ...(t.done ? { textDecoration: 'line-through', color: 'var(--txt-2)' } : {}) }}>{t.title}</div>
-                <div style={{ fontSize: 11, color: 'var(--txt-2)' }}>{stage(t.stage).label} · 📅 {thDate(t.deadline)}</div>
+                <div style={{ fontSize: 11, color: 'var(--txt-2)' }}>{stage(t.stage).label} · 🔥 {thDate(t.deadline)}</div>
               </div>
               <Badge text={t.priority} color={PRIORITY[t.priority]} />
               <Avatar user={profile(t.assignee_id)} size={24} />
