@@ -14,7 +14,7 @@ export default function TaskForm({ id, onClose, onSaved, onEditProject, initialP
   const initialProject = projects.find((p) => p.id === initialProjectId) || projects[0]
   const [f, setF] = useState(existing || {
     title: '', project_id: initialProject?.id, stage: initialProject?.status || 'Recording',
-    done: false, deadline: initialProject?.deadline || '', assignee_id: profiles[0]?.id, priority: 'กลาง',
+    done: false, deadline: '', assignee_id: profiles[0]?.id, priority: 'กลาง',
   })
   const [busy, setBusy] = useState(false)
   const set = (k, v) => setF((s) => ({ ...s, [k]: v }))
@@ -78,8 +78,12 @@ export default function TaskForm({ id, onClose, onSaved, onEditProject, initialP
           <div className="form-grp"><label>ผู้รับผิดชอบ</label>
             <select value={f.assignee_id || ''} onChange={(e) => set('assignee_id', e.target.value)}>
               {profiles.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}</select></div>
-          <div className="form-grp"><label>Deadline</label>
-            <input type="date" value={f.deadline || ''} onChange={(e) => set('deadline', e.target.value)} /></div>
+          <div className="form-grp"><label>Deadline <span style={{ color: 'var(--txt-2)', fontWeight: 400 }}>(ใส่ภายหลังได้)</span></label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input type="date" value={f.deadline || ''} onChange={(e) => set('deadline', e.target.value)} />
+              {f.deadline && <button type="button" className="btn btn-sm" onClick={() => set('deadline', '')}>ล้าง</button>}
+            </div>
+          </div>
         </div>
         <label style={{ display: 'flex', alignItems: 'center', gap: 9, marginTop: 4, cursor: 'pointer' }}>
           <input type="checkbox" checked={Boolean(f.done)} onChange={(e) => set('done', e.target.checked)} />

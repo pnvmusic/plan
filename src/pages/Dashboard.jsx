@@ -39,7 +39,7 @@ export default function Dashboard() {
   const nearDeadline = projects.filter((p) => p.status !== 'Released'
     && daysBetween(today, p.deadline) >= 0 && daysBetween(today, p.deadline) <= 7)
   const openTasks = tasks.filter((t) => !t.done).length
-  const overdue = tasks.filter((t) => !t.done && daysBetween(today, t.deadline) < 0).length
+  const overdue = tasks.filter((t) => !t.done && t.deadline && daysBetween(today, t.deadline) < 0).length
   const totalSpent = expenses.filter((x) => x.status !== 'ยกเลิก').reduce((s, x) => s + Number(x.amount), 0)
   const pending = expenses.filter((x) => x.status === 'รอเบิก').reduce((s, x) => s + Number(x.amount), 0)
   const localAppleUids = new Set(events.map((e) => appleUidForLocal(e.id)))

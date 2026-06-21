@@ -87,7 +87,9 @@ export default function ProjectDetail({ id, onClose, onEdit, onDelete }) {
                 onClick={(e) => { e.stopPropagation(); toggle(t) }}>{t.done ? '✓' : ''}</div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 13, ...(t.done ? { textDecoration: 'line-through', color: 'var(--txt-2)' } : {}) }}>{t.title}</div>
-                <div style={{ fontSize: 11, color: 'var(--txt-2)' }}>{stage(t.stage).label} · 🔥 {thDate(t.deadline)}</div>
+                <div style={{ fontSize: 11, color: 'var(--txt-2)' }}>
+                  {stage(t.stage).label} · {t.deadline ? `🔥 ${thDate(t.deadline)}` : 'ยังไม่กำหนด deadline'}
+                </div>
               </div>
               <Badge text={t.priority} color={PRIORITY[t.priority]} />
               <Avatar user={profile(t.assignee_id)} size={24} />
