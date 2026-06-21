@@ -52,7 +52,8 @@ async function caldav(url: string, method: string, body?: string, extraHeaders =
     body,
   })
   if (!res.ok && !(method === 'DELETE' && res.status === 404)) {
-    throw new Error(`Apple CalDAV ${method} failed (${res.status})`)
+    const errBody = await res.text().catch(() => '')
+    throw new Error(`Apple CalDAV ${method} failed (${res.status})${errBody ? ' — ' + errBody.replace(/\s+/g, ' ').slice(0, 200) : ''}`)
   }
   return res
 }
@@ -98,6 +99,7 @@ async function discoverCalendarUrl() {
 }
 
 async function findEventUrlByUid(calendarUrl: string, uid: string) {
+  if (!uid) throw new Error('Apple event UID ว่าง — ไม่สามารถค้นหา event ใน iCloud ได้')
   const res = await caldav(
     calendarUrl,
     'REPORT',
@@ -107,7 +109,7 @@ async function findEventUrlByUid(calendarUrl: string, uid: string) {
         <c:comp-filter name="VCALENDAR">
           <c:comp-filter name="VEVENT">
             <c:prop-filter name="UID">
-              <c:text-match collation="i;octet">${escXml(uid)}</c:text-match>
+              <c:text-match>${escXml(uid)}</c:text-match>
             </c:prop-filter>
           </c:comp-filter>
         </c:comp-filter>
