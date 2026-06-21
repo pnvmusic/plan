@@ -7,4 +7,14 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   base: process.env.VITE_BASE || '/',
+  server: {
+    proxy: {
+      '/apple-calendar.ics': {
+        target: 'https://p129-caldav.icloud.com',
+        changeOrigin: true,
+        secure: true,
+        rewrite: () => '/published/2/MTc1NTEzMTY5ODE3NTUxM_2dw8_1BkJgNEBvh56HLbqsyLJYlQBTlWkm9tkEsWWwlkDS9TfzDfvj3j98LYpxixvQzOXbiKsYwDIHyJSS8NI',
+      },
+    },
+  },
 })
