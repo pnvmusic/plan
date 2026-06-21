@@ -2,6 +2,9 @@ import { ymd } from './format'
 
 const ICLOUD_CALENDAR_URL = 'webcal://p129-caldav.icloud.com/published/2/MTc1NTEzMTY5ODE3NTUxM_2dw8_1BkJgNEBvh56HLbqsyLJYlQBTlWkm9tkEsWWwlkDS9TfzDfvj3j98LYpxixvQzOXbiKsYwDIHyJSS8NI'
 const LOCAL_PROXY_URL = '/apple-calendar.ics'
+const SUPABASE_FUNCTION_URL = import.meta.env.VITE_SUPABASE_URL
+  ? `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/apple-calendar`
+  : ''
 
 const toHttpCalendarUrl = (url) => url.replace(/^webcal:\/\//i, 'https://')
 
@@ -122,6 +125,11 @@ export async function getAppleCalendarEvents() {
   const url = toHttpCalendarUrl(ICLOUD_CALENDAR_URL)
   const sameOrigin = await fetch(LOCAL_PROXY_URL).catch(() => null)
   if (sameOrigin?.ok) return parseIcsEvents(await sameOrigin.text())
+
+  if (SUPABASE_FUNCTION_URL) {
+    const supabaseProxy = await fetch(SUPABASE_FUNCTION_URL).catch(() => null)
+    if (supabaseProxy?.ok) return parseIcsEvents(await supabaseProxy.text())
+  }
 
   const direct = await fetch(url, { mode: 'cors' }).catch(() => null)
   if (direct?.ok) return parseIcsEvents(await direct.text())
