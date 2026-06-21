@@ -35,11 +35,6 @@ export default function Calendar() {
   const [form, setForm] = useState(undefined) // undefined=closed; {} or {date} = new; id string = edit
   const today = todayISO()
 
-  useEffect(() => {
-    const open = params.get('open')
-    if (open) { setDetailId(open); params.delete('open'); setParams(params, { replace: true }) }
-  }, []) // eslint-disable-line
-
   const loadAppleEvents = useCallback((options) => {
     let alive = true
     setAppleState({ loading: true, error: '' })
@@ -58,6 +53,36 @@ export default function Calendar() {
   }, [])
 
   useEffect(() => loadAppleEvents(), [loadAppleEvents])
+
+  useEffect(() => {
+    const open = params.get('open')
+    const date = params.get('date')
+    if (!open && !date) return
+
+    const next = new URLSearchParams(params)
+    if (date) {
+      setCursor(date)
+      setView('day')
+      next.delete('date')
+    }
+    if (open && !open.startsWith('apple:')) {
+      setDetailId(open)
+      next.delete('open')
+    }
+    if (next.toString() !== params.toString()) setParams(next, { replace: true })
+  }, [params, setParams])
+
+  useEffect(() => {
+    const open = params.get('open')
+    if (!open?.startsWith('apple:')) return
+    const event = appleEvents.find((e) => e.id === open)
+    if (!event) return
+
+    setExternalDetail(event)
+    const next = new URLSearchParams(params)
+    next.delete('open')
+    setParams(next, { replace: true })
+  }, [appleEvents, params, setParams])
 
   const refreshCalendar = async () => {
     await reload()

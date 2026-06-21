@@ -1,8 +1,15 @@
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useData } from '../context/DataContext'
 import { stage, EV_COLOR, EV_ICON } from '../lib/constants'
 import { fmtMoney, daysBetween, thDate, todayISO } from '../lib/format'
+import { getAppleCalendarEvents } from '../lib/ical'
 import { Badge, Progress } from '../components/ui'
+
+const APPLE_COLOR = '#CB30E0'
+const APPLE_ICON = '☁️'
+const APPLE_LABEL = 'Apple Calendar'
+const appleUidForLocal = (id) => `museflow-${id}@museflow.app`
 
 const Stat = ({ ico, color, val, label, trend }) => (
   <div className="stat">
@@ -16,7 +23,16 @@ const Stat = ({ ico, color, val, label, trend }) => (
 export default function Dashboard() {
   const nav = useNavigate()
   const { projects, tasks, events, expenses, projectProgress, profiles } = useData()
+  const [appleEvents, setAppleEvents] = useState([])
   const today = todayISO()
+
+  useEffect(() => {
+    let alive = true
+    getAppleCalendarEvents()
+      .then((items) => { if (alive) setAppleEvents(items) })
+      .catch(() => { if (alive) setAppleEvents([]) })
+    return () => { alive = false }
+  }, [])
 
   const active = projects.filter((p) => p.status !== 'Released').length
   const released = projects.filter((p) => p.status === 'Released').length
@@ -26,10 +42,13 @@ export default function Dashboard() {
   const overdue = tasks.filter((t) => !t.done && daysBetween(today, t.deadline) < 0).length
   const totalSpent = expenses.filter((x) => x.status !== 'ยกเลิก').reduce((s, x) => s + Number(x.amount), 0)
   const pending = expenses.filter((x) => x.status === 'รอเบิก').reduce((s, x) => s + Number(x.amount), 0)
+  const localAppleUids = new Set(events.map((e) => appleUidForLocal(e.id)))
+  const visibleAppleEvents = appleEvents.filter((e) => !localAppleUids.has(e.uid))
+  const allEvents = [...events, ...visibleAppleEvents]
   const upcomingRec = events.filter((e) => e.type === 'recording' && daysBetween(today, e.date) >= 0).length
 
-  const upcoming = events.filter((e) => daysBetween(today, e.date) >= 0)
-    .sort((a, b) => a.date.localeCompare(b.date)).slice(0, 5)
+  const upcoming = allEvents.filter((e) => daysBetween(today, e.date) >= 0)
+    .sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || ''))).slice(0, 5)
 
   const costByProj = projects.map((p) => ({
     p, cost: expenses.filter((x) => x.project_id === p.id && x.status !== 'ยกเลิก')
@@ -93,12 +112,21 @@ export default function Dashboard() {
               <button className="btn btn-sm" onClick={() => nav('/calendar')}>ปฏิทิน →</button></div>
             {upcoming.length ? upcoming.map((e) => (
               <div key={e.id} className="list-row" style={{ cursor: 'pointer' }}
-                onClick={() => nav('/calendar?open=' + e.id)}>
+                onClick={() => nav(e.external
+                  ? `/calendar?date=${e.date}&open=${encodeURIComponent(e.id)}`
+                  : '/calendar?open=' + e.id)}>
                 <div className="stat-ico" style={{ width: 34, height: 34, margin: 0, fontSize: 15,
-                  background: EV_COLOR[e.type] + '22', color: EV_COLOR[e.type] }}>{EV_ICON[e.type]}</div>
+                  background: (e.external ? APPLE_COLOR : EV_COLOR[e.type]) + '22',
+                  color: e.external ? APPLE_COLOR : EV_COLOR[e.type] }}>
+                  {e.external ? APPLE_ICON : EV_ICON[e.type]}
+                </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{e.title}</div>
-                  <div style={{ fontSize: 11, color: 'var(--txt-2)' }}>{thDate(e.date)} · {e.time}{e.studio ? ' · ' + e.studio : ''}</div>
+                  <div style={{ fontSize: 11, color: 'var(--txt-2)' }}>
+                    {thDate(e.date)} · {e.allDay ? 'ทั้งวัน' : e.time}{e.external
+                      ? ` · ${e.location || APPLE_LABEL}`
+                      : e.studio ? ' · ' + e.studio : ''}
+                  </div>
                 </div>
               </div>
             )) : <div className="empty"><div className="ico">📅</div>ยังไม่มีนัดหมาย</div>}
