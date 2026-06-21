@@ -37,9 +37,9 @@ export const DOC_TYPES = [
 ]
 export const PRIORITY = { 'สูง':'#ff5a6e', 'กลาง':'#ffb020', 'ต่ำ':'#4aa8ff' }
 
-export const EV_COLOR = { recording:'#7c5cff', meeting:'#4aa8ff', deadline:'#ff5a6e' }
-export const EV_ICON  = { recording:'🎤', meeting:'💬', deadline:'🔥' }
-export const EV_LABEL = { recording:'อัดเพลง', meeting:'ประชุม', deadline:'Deadline' }
+export const EV_COLOR = { recording:'#7c5cff', meeting:'#4aa8ff', deadline:'#ff5a6e', release:'#3ddc91' }
+export const EV_ICON  = { recording:'🎤', meeting:'💬', deadline:'🔥', release:'🚀' }
+export const EV_LABEL = { recording:'อัดเพลง', meeting:'ประชุม', deadline:'Deadline', release:'Release' }
 
 export const ROLES = {
   'Admin':       { label: 'Admin',       desc: 'จัดการทุกอย่างได้' },

@@ -11,7 +11,7 @@ create type project_stage as enum (
   'Mixing','Mastering','Artwork','MV','Distribution','Released'
 );
 create type task_priority as enum ('สูง','กลาง','ต่ำ');
-create type event_type    as enum ('recording','meeting','deadline');
+create type event_type    as enum ('recording','meeting','deadline','release');
 create type expense_status as enum ('รอเบิก','เบิกแล้ว','จ่ายแล้ว','ยกเลิก');
 create type document_type as enum (
   'สัญญาจ้างทำเพลง','สัญญา MV','สัญญา Producer','สัญญา Session Musician',

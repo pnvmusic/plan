@@ -49,9 +49,11 @@ export default function ProjectForm({ id, onClose, onSaved }) {
         release_date: f.release_date || null, deadline: f.deadline || null,
         owner_id: f.owner_id, note: f.note || '', refs: f.refs || [],
       }
-      if (id) await api.updateProject(id, row)
-      else await api.createProject({ ...row, created_by: me.id })
-      toast(id ? 'บันทึกการแก้ไขแล้ว' : 'เพิ่มเพลงใหม่แล้ว')
+      const saved = id ? await api.updateProject(id, row) : await api.createProject({ ...row, created_by: me.id })
+      const baseMessage = id ? 'บันทึกการแก้ไขแล้ว' : 'เพิ่มเพลงใหม่แล้ว'
+      toast(saved.appleSyncError
+        ? `${baseMessage} แต่ sync Release ไป Apple ไม่สำเร็จ: ${saved.appleSyncError.message}`
+        : f.release_date ? `${baseMessage} และ sync Release ไป Apple Calendar แล้ว` : baseMessage)
       onSaved()
     } catch (e) { toast('ผิดพลาด: ' + e.message) } finally { setBusy(false) }
   }

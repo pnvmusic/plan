@@ -20,14 +20,83 @@ export const updateProfile = (id, patch) =>
 export const getProjects = () =>
   supabase.from('projects').select('*').order('deadline', { ascending: true }).then(handle)
 
+async function findProjectReleaseEvent(projectId) {
+  const { data, error } = await supabase
+    .from('events')
+    .select('*')
+    .eq('project_id', projectId)
+    .eq('type', 'release')
+    .is('task_id', null)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+  if (error) throw error
+  return data
+}
+
+async function syncProjectReleaseEvent(project) {
+  let appleSyncError = null
+  const existing = await findProjectReleaseEvent(project.id)
+
+  if (!project.release_date) {
+    if (existing?.id) {
+      try { await syncAppleEvent('delete', existing) } catch (err) { appleSyncError = err }
+      await deleteEvent(existing.id)
+    }
+    return { event: null, appleSyncError }
+  }
+
+  const eventRow = {
+    title: `Release: ${project.title}`,
+    type: 'release',
+    date: project.release_date,
+    time: '',
+    end_time: '',
+    studio: '',
+    project_id: project.id,
+    task_id: null,
+    attendees: project.owner_id ? [project.owner_id] : [],
+    note: '',
+  }
+
+  const event = existing?.id
+    ? await updateEvent(existing.id, eventRow)
+    : await createEvent(eventRow)
+
+  try {
+    await syncAppleEvent(existing?.id ? 'update' : 'create', event)
+  } catch (err) {
+    appleSyncError = err
+  }
+  return { event, appleSyncError }
+}
+
 export const createProject = (row) =>
-  supabase.from('projects').insert(row).select().single().then(handle)
+  supabase.from('projects').insert(row).select().single().then(async (result) => {
+    const project = handle(result)
+    const { appleSyncError } = await syncProjectReleaseEvent(project)
+    if (appleSyncError) project.appleSyncError = appleSyncError
+    return project
+  })
 
 export const updateProject = (id, patch) =>
-  supabase.from('projects').update(patch).eq('id', id).select().single().then(handle)
+  supabase.from('projects').update(patch).eq('id', id).select().single().then(async (result) => {
+    const project = handle(result)
+    const { appleSyncError } = await syncProjectReleaseEvent(project)
+    if (appleSyncError) project.appleSyncError = appleSyncError
+    return project
+  })
 
-export const deleteProject = (id) =>
-  supabase.from('projects').delete().eq('id', id).then(handle)
+export const deleteProject = async (id) => {
+  let appleSyncError = null
+  const existing = await findProjectReleaseEvent(id)
+  if (existing?.id) {
+    try { await syncAppleEvent('delete', existing) } catch (err) { appleSyncError = err }
+    await deleteEvent(existing.id)
+  }
+  await supabase.from('projects').delete().eq('id', id).then(handle)
+  return { appleSyncError }
+}
 
 // ---------- TASKS ----------
 export const getTasks = () =>
