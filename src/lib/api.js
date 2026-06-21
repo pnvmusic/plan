@@ -56,8 +56,12 @@ export const deleteEvent = (id) =>
   supabase.from('events').delete().eq('id', id).then(handle)
 
 export async function syncAppleEvent(action, event) {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session?.access_token) throw new Error('กรุณาเข้าสู่ระบบใหม่ก่อน sync Apple Calendar')
+
   const { data, error } = await supabase.functions.invoke('apple-event-sync', {
     body: { action, event },
+    headers: { Authorization: `Bearer ${session.access_token}` },
   })
   if (error) throw error
   if (data?.ok === false) throw new Error(data.error || 'Apple Calendar sync failed')
