@@ -143,7 +143,7 @@ function toIcs(event: Record<string, any>, uid = appleUid(event.id)) {
   ].filter(Boolean).join('\r\n')
 }
 
-async function assertCalendarPermission(req: Request) {
+async function assertCalendarPermission(req: Request, action: string, event: Record<string, any>) {
   const auth = req.headers.get('authorization') || ''
   if (!auth.toLowerCase().startsWith('bearer ')) {
     throw new Response(JSON.stringify({ ok: false, error: 'Missing MuseFlow session token' }), {
@@ -178,7 +178,11 @@ async function assertCalendarPermission(req: Request) {
     .select('role')
     .eq('id', userRes.user.id)
     .single()
-  if (error || !['Admin', 'Manager'].includes(profile?.role)) {
+  const role = profile?.role
+  const isTaskDeadlineSync = ['create', 'update', 'delete'].includes(action)
+    && event?.type === 'deadline'
+    && Boolean(event?.task_id)
+  if (error || !['Admin', 'Manager'].includes(role) && !(role === 'Team Member' && isTaskDeadlineSync)) {
     throw new Response(JSON.stringify({ ok: false, error: 'Only Admin or Manager can sync Apple Calendar.' }), {
       status: 403,
       headers: { ...corsHeaders, 'content-type': 'application/json' },
@@ -191,8 +195,8 @@ Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders })
 
   try {
-    await assertCalendarPermission(req)
     const { action, event } = await req.json()
+    await assertCalendarPermission(req, action, event)
     if (!event?.id && !event?.uid) throw new Error('Missing event id')
 
     const calendarUrl = await discoverCalendarUrl()
