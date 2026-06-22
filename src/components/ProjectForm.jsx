@@ -37,6 +37,12 @@ export default function ProjectForm({ id, onClose, onSaved }) {
     setF((s) => ({ ...s, refs: [...(s.refs || []), ref] }))
     setLinkName(''); setLinkUrl('')
   }
+  const refsWithPendingLink = () => {
+    const url = linkUrl.trim()
+    if (!url) return f.refs || []
+    const ref = linkName.trim() ? `${linkName.trim()} — ${url}` : url
+    return [...(f.refs || []), ref]
+  }
   const removeLink = (i) =>
     setF((s) => ({ ...s, refs: (s.refs || []).filter((_, idx) => idx !== i) }))
 
@@ -47,7 +53,7 @@ export default function ProjectForm({ id, onClose, onSaved }) {
       const row = {
         title: f.title.trim(), artist: f.artist.trim(), type: f.type, status: f.status,
         release_date: f.release_date || null, deadline: f.deadline || null,
-        owner_id: f.owner_id, note: f.note || '', refs: f.refs || [],
+        owner_id: f.owner_id, note: f.note || '', refs: refsWithPendingLink(),
       }
       const saved = id ? await api.updateProject(id, row) : await api.createProject({ ...row, created_by: me.id })
       const baseMessage = id ? 'บันทึกการแก้ไขแล้ว' : 'เพิ่มเพลงใหม่แล้ว'
@@ -90,7 +96,7 @@ export default function ProjectForm({ id, onClose, onSaved }) {
         <div className="form-grp"><label>Note</label>
           <textarea value={f.note || ''} placeholder="รายละเอียดเพิ่มเติม หรือ [ชื่อไฟล์](https://drive.google.com/...)"
             onChange={(e) => set('note', e.target.value)} /></div>
-        <div className="form-grp"><label>ลิงก์ไฟล์เพลง / Reference (Google Drive, demo, lyrics, artwork)</label>
+        <div className="form-grp"><label>ลิงก์ไฟล์เพลง / Reference (YouTube, Google Drive, demo, lyrics, artwork)</label>
           {f.refs?.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 9 }}>
               {f.refs.map((r, i) => {
@@ -108,7 +114,7 @@ export default function ProjectForm({ id, onClose, onSaved }) {
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <input style={{ flex: '1 1 120px' }} value={linkName} placeholder="ชื่อ (ไม่บังคับ)"
               onChange={(e) => setLinkName(e.target.value)} />
-            <input style={{ flex: '2 1 180px' }} value={linkUrl} placeholder="วางลิงก์ เช่น https://drive.google.com/..."
+            <input style={{ flex: '2 1 180px' }} value={linkUrl} placeholder="วางลิงก์ เช่น YouTube หรือ Google Drive"
               onChange={(e) => setLinkUrl(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addLink() } }} />
             <button type="button" className="btn btn-sm" onClick={addLink}>＋ เพิ่ม</button>
