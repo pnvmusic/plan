@@ -243,8 +243,20 @@ export const deleteDocument = (id) =>
   supabase.from('documents').delete().eq('id', id).then(handle)
 
 // ---------- STORAGE (ไฟล์แนบ: ใบเสร็จ, เอกสาร, reference) ----------
+// Supabase Storage รับ key เฉพาะอักษร ASCII บางกลุ่ม — ชื่อไฟล์ภาษาไทยทำให้อัปโหลด 400
+// จึงแปลงชื่อไฟล์เป็น key ปลอดภัยก่อน (ชื่อจริงเก็บแยกในตาราง documents/expenses)
+function safeStorageName(filename = '') {
+  const dot = filename.lastIndexOf('.')
+  const ext = dot > 0 ? filename.slice(dot + 1).replace(/[^\w]/g, '').toLowerCase() : ''
+  const base = (dot > 0 ? filename.slice(0, dot) : filename)
+    .replace(/[^\w\-. ()]/g, '') // ตัดอักษรที่ Storage ไม่รับ (เช่น ไทย, อีโมจิ)
+    .replace(/\s+/g, '_')
+    .slice(0, 80)
+  return `${base || 'file'}${ext ? '.' + ext : ''}`
+}
+
 export async function uploadFile(file, folder = 'misc') {
-  const path = `${folder}/${Date.now()}_${file.name}`
+  const path = `${folder}/${Date.now()}_${safeStorageName(file.name)}`
   const { error } = await supabase.storage.from(FILES_BUCKET).upload(path, file)
   if (error) throw error
   return path
