@@ -17,14 +17,16 @@ export function AuthProvider({ children }) {
   }, [])
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data }) => {
+    supabase.auth.getSession().then(({ data }) => {
       setSession(data.session)
-      await loadProfile(data.session?.user?.id)
-      setLoading(false)
+      loadProfile(data.session?.user?.id).finally(() => setLoading(false))
     })
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_e, sess) => {
+    // ห้าม await คำสั่ง Supabase ใน callback นี้ — SDK ถือ auth lock อยู่ระหว่างเรียก
+    // callback ถ้า query ข้างในรอ lock เดียวกันจะ deadlock (จอหมุนค้างตอน refresh token)
+    // จึงโยน loadProfile ออกไปนอก lock ด้วย setTimeout
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, sess) => {
       setSession(sess)
-      await loadProfile(sess?.user?.id)
+      setTimeout(() => loadProfile(sess?.user?.id), 0)
     })
     return () => sub.subscription.unsubscribe()
   }, [loadProfile])
