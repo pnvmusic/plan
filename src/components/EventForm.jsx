@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useData } from '../context/DataContext'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
-import { EV_LABEL } from '../lib/constants'
 import { todayISO } from '../lib/format'
 import * as api from '../lib/api'
 import { Modal } from './ui'
@@ -15,7 +14,7 @@ export default function EventForm({ initial, onClose, onSaved }) {
   const isEdit = typeof initial === 'string'
   const existing = isEdit ? events.find((e) => e.id === initial) : null
   const [f, setF] = useState(existing || {
-    title: '', type: 'recording', date: initial?.date || todayISO(),
+    title: '', date: initial?.date || todayISO(),
     time: '13:00', end_time: '', studio: '', project_id: projects[0]?.id || '',
     attendees: [me.id], note: '',
   })
@@ -30,7 +29,7 @@ export default function EventForm({ initial, onClose, onSaved }) {
     setBusy(true)
     try {
       const row = {
-        title: f.title.trim(), type: f.type, date: f.date, time: f.time, end_time: f.end_time,
+        title: f.title.trim(), date: f.date, time: f.time, end_time: f.end_time,
         studio: f.studio, project_id: f.project_id || null, attendees: f.attendees, note: f.note,
       }
       const saved = isEdit ? await api.updateEvent(initial, row) : await api.createEvent(row)
@@ -52,20 +51,17 @@ export default function EventForm({ initial, onClose, onSaved }) {
         <div className="form-grp"><label>ชื่อกิจกรรม *</label>
           <input value={f.title} placeholder="เช่น อัดเสียงร้อง" onChange={(e) => set('title', e.target.value)} /></div>
         <div className="form-row">
-          <div className="form-grp"><label>ประเภท</label>
-            <select value={f.type} onChange={(e) => set('type', e.target.value)}>
-              {Object.keys(EV_LABEL).map((k) => <option key={k} value={k}>{EV_LABEL[k]}</option>)}</select></div>
           <div className="form-grp"><label>วันที่</label>
             <input type="date" value={f.date} onChange={(e) => set('date', e.target.value)} /></div>
-        </div>
-        <div className="form-row">
           <div className="form-grp"><label>เวลาเริ่ม</label>
             <input type="time" value={f.time} onChange={(e) => set('time', e.target.value)} /></div>
+        </div>
+        <div className="form-row">
           <div className="form-grp"><label>เวลาสิ้นสุด</label>
             <input type="time" value={f.end_time || ''} onChange={(e) => set('end_time', e.target.value)} /></div>
+          <div className="form-grp"><label>สถานที่ / Studio</label>
+            <input value={f.studio} placeholder="เช่น Studio 28 ห้อง A" onChange={(e) => set('studio', e.target.value)} /></div>
         </div>
-        <div className="form-grp"><label>สถานที่ / Studio</label>
-          <input value={f.studio} placeholder="เช่น Studio 28 ห้อง A" onChange={(e) => set('studio', e.target.value)} /></div>
         <div className="form-grp"><label>เพลงที่เกี่ยวข้อง</label>
           <select value={f.project_id || ''} onChange={(e) => set('project_id', e.target.value)}>
             <option value="">— ไม่ระบุ —</option>
