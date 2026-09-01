@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { STAGES, TYPES, ARTISTS } from '../lib/constants'
 import { shiftDateISO, todayISO } from '../lib/format'
+import { normalizeReportAliases } from '../lib/projectAliases'
 import * as api from '../lib/api'
 import { Modal, parseRef } from './ui'
 
@@ -14,15 +15,20 @@ export default function ProjectForm({ id, onClose, onSaved }) {
   const existing = id ? projects.find((p) => p.id === id) : null
   const defaultReleaseDate = shiftDateISO(todayISO(), 14)
   const [f, setF] = useState(existing
-    ? { ...existing, release_date: existing.release_date || shiftDateISO(existing.deadline, 14) }
+    ? {
+      ...existing,
+      release_date: existing.release_date || shiftDateISO(existing.deadline, 14),
+      report_aliases: existing.report_aliases || [],
+    }
     : {
       title: '', artist: 'p n v .', type: 'Single', status: 'Idea',
       release_date: defaultReleaseDate, deadline: shiftDateISO(defaultReleaseDate, -14),
-      owner_id: me.id, note: '', refs: [],
+      owner_id: me.id, note: '', refs: [], report_aliases: [],
     })
   const [busy, setBusy] = useState(false)
   const [linkName, setLinkName] = useState('')
   const [linkUrl, setLinkUrl] = useState('')
+  const [aliasName, setAliasName] = useState('')
   const set = (k, v) => setF((s) => ({ ...s, [k]: v }))
   const setReleaseDate = (v) => setF((s) => ({
     ...s,
@@ -45,6 +51,14 @@ export default function ProjectForm({ id, onClose, onSaved }) {
   }
   const removeLink = (i) =>
     setF((s) => ({ ...s, refs: (s.refs || []).filter((_, idx) => idx !== i) }))
+  const addAlias = () => {
+    const aliases = normalizeReportAliases(f.report_aliases, aliasName)
+    if (aliases.length === (f.report_aliases || []).length) return
+    setF((s) => ({ ...s, report_aliases: aliases }))
+    setAliasName('')
+  }
+  const removeAlias = (i) =>
+    setF((s) => ({ ...s, report_aliases: (s.report_aliases || []).filter((_, idx) => idx !== i) }))
 
   const save = async () => {
     if (!f.title.trim() || !f.artist.trim()) return toast('กรอกชื่อเพลงก่อน')
@@ -54,6 +68,7 @@ export default function ProjectForm({ id, onClose, onSaved }) {
         title: f.title.trim(), artist: f.artist.trim(), type: f.type, status: f.status,
         release_date: f.release_date || null, deadline: f.deadline || null,
         owner_id: f.owner_id, note: f.note || '', refs: refsWithPendingLink(),
+        report_aliases: normalizeReportAliases(f.report_aliases, aliasName),
       }
       const saved = id ? await api.updateProject(id, row) : await api.createProject({ ...row, created_by: me.id })
       const baseMessage = id ? 'บันทึกการแก้ไขแล้ว' : 'เพิ่มเพลงใหม่แล้ว'
@@ -71,6 +86,28 @@ export default function ProjectForm({ id, onClose, onSaved }) {
       <div className="modal-body">
         <div className="form-grp"><label>ชื่อเพลง *</label>
           <input value={f.title} placeholder="เช่น แสงสุดท้าย" onChange={(e) => set('title', e.target.value)} /></div>
+        <div className="form-grp"><label>ชื่อสำหรับจับคู่รายงาน</label>
+          <div style={{ fontSize: 11, color: 'var(--txt-2)', marginBottom: 7 }}>
+            เพิ่มได้หลายชื่อ เช่น ชื่อใน YouTube Statement, Acoustic, Live หรือชื่อภาษาอังกฤษ
+          </div>
+          {f.report_aliases?.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 9 }}>
+              {f.report_aliases.map((alias, i) => (
+                <span key={`${alias}-${i}`} className="tag" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  🔗 {alias}
+                  <button type="button" onClick={() => removeAlias(i)}
+                    style={{ border: 'none', background: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: 13, padding: 0, lineHeight: 1 }}>✕</button>
+                </span>
+              ))}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input value={aliasName} placeholder="เช่น ชื่อเพลง (Acoustic Version)"
+              onChange={(e) => setAliasName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addAlias() } }} />
+            <button type="button" className="btn btn-sm" onClick={addAlias}>＋ เพิ่มชื่อ</button>
+          </div>
+        </div>
         <div className="form-row">
           <div className="form-grp"><label>ศิลปิน</label>
             <select value={f.artist} onChange={(e) => set('artist', e.target.value)}>

@@ -29,7 +29,7 @@ export default function Projects() {
   }, []) // eslint-disable-line
 
   const list = projects.filter((p) => {
-    if (filters.q && !(p.title + p.artist + (p.note || '')).toLowerCase().includes(filters.q.toLowerCase())) return false
+    if (filters.q && !(p.title + p.artist + (p.note || '') + (p.report_aliases || []).join(' ')).toLowerCase().includes(filters.q.toLowerCase())) return false
     if (filters.status && p.status !== filters.status) return false
     if (filters.owner && p.owner_id !== filters.owner) return false
     if (filters.type && p.type !== filters.type) return false

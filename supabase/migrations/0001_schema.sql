@@ -45,6 +45,7 @@ create table public.projects (
   owner_id    uuid references public.profiles(id) on delete set null,
   note        text default '',
   refs        text[] not null default '{}',
+  report_aliases text[] not null default '{}',
   created_by  uuid references public.profiles(id) on delete set null,
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now()

@@ -5,6 +5,7 @@
   "type": "module",
   "description": "pnvPlan — ระบบวางแผนงานของ p n v",
   "scripts": {
+    "test": "node --test src/**/*.test.js",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",

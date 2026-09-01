@@ -58,6 +58,13 @@ export default function ProjectDetail({ id, onClose, onEdit, onDelete }) {
         {p.note && <><div className="mini-label" style={{ marginTop: 14 }}>Note</div>
           <div style={{ fontSize: 13, marginTop: 5 }}><Linkify text={p.note} /></div></>}
 
+        <div className="mini-label" style={{ marginTop: 14 }}>ชื่อสำหรับจับคู่รายงาน ({p.report_aliases?.length || 0})</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 7 }}>
+          {p.report_aliases?.length
+            ? p.report_aliases.map((alias, i) => <span key={`${alias}-${i}`} className="tag">🔗 {alias}</span>)
+            : <span style={{ fontSize: 12, color: 'var(--txt-2)' }}>— ไม่มี</span>}
+        </div>
+
         <div className="mini-label" style={{ marginTop: 18 }}>ลิงก์ไฟล์ / Reference ({p.refs?.length || 0})</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 7 }}>
           {p.refs?.length ? p.refs.map((r, i) => {
