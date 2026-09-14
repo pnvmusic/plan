@@ -78,7 +78,8 @@ export default function Dashboard() {
         <div className="card">
           <div className="section-head"><h3>โปรเจกต์ที่กำลังดำเนินการ</h3><div className="spacer" />
             <button className="btn btn-sm" onClick={() => nav('/projects')}>ดูทั้งหมด →</button></div>
-          <table className="table">
+          <div className="scroll-x">
+          <table className="table dashboard-table">
             <thead><tr><th>เพลง</th><th>สถานะ</th><th>Release / Deadline</th><th>Progress</th></tr></thead>
             <tbody>
               {projects.filter((p) => p.status !== 'Released')
@@ -104,6 +105,7 @@ export default function Dashboard() {
                 })}
             </tbody>
           </table>
+          </div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

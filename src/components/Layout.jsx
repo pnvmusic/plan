@@ -42,6 +42,17 @@ export default function Layout({ children }) {
     document.documentElement.setAttribute('data-theme', 'light')
   }, [])
 
+  useEffect(() => {
+    setOpen(false)
+  }, [loc.pathname])
+
+  useEffect(() => {
+    if (!open) return undefined
+    const previous = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = previous }
+  }, [open])
+
   const meta = META[loc.pathname] || { t: 'pnvPlan', s: '' }
   const openTasks = tasks.filter((t) => !t.done).length
   const pendingExp = expenses.filter((e) => e.status === 'รอเบิก').length
@@ -66,8 +77,8 @@ export default function Layout({ children }) {
 
   return (
     <div className="layout">
-      {open && <div className="sb-backdrop" onClick={() => setOpen(false)} />}
-      <aside className={'sidebar' + (open ? ' open' : '')}>
+      {open && <div className="sb-backdrop" onClick={() => setOpen(false)} aria-hidden="true" />}
+      <aside className={'sidebar' + (open ? ' open' : '')} aria-label="เมนูหลัก">
         <div className="sb-top">
           <div className="brandmark" style={{ marginBottom: 0 }}>
             <div className="brand-logo" style={{ width: 34, height: 34, fontSize: 18 }}>🎵</div>
@@ -107,7 +118,8 @@ export default function Layout({ children }) {
 
       <div className="main">
         <div className="topbar">
-          <button className="icon-btn menu-toggle" onClick={() => setOpen(true)}>☰</button>
+          <button className="icon-btn menu-toggle" onClick={() => setOpen(true)}
+            aria-label="เปิดเมนู" aria-expanded={open}>☰</button>
           <div>
             <div className="page-title">{meta.t}</div>
             <div className="page-sub">{meta.s}</div>
