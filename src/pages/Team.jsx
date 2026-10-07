@@ -9,7 +9,7 @@ import * as api from '../lib/api'
 
 const AREAS = [
   ['projects', 'โปรเจกต์'], ['tasks', 'งาน/Task'], ['calendar', 'ปฏิทิน'],
-  ['expenses', 'ค่าใช้จ่าย'], ['documents', 'เอกสาร'], ['users', 'ผู้ใช้'],
+  ['expenses', 'ค่าใช้จ่าย'], ['fund', 'เงินกองกลาง'], ['documents', 'เอกสาร'], ['users', 'ผู้ใช้'],
 ]
 
 export default function Team() {

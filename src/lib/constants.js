@@ -30,6 +30,10 @@ export const EXP_CATS = [
 ]
 export const EXP_STATUS = { 'รอเบิก':'#ffb020', 'เบิกแล้ว':'#4aa8ff', 'จ่ายแล้ว':'#3ddc91', 'ยกเลิก':'#6b768f' }
 export const PAY_METHODS = ['โอนธนาคาร', 'เงินสด', 'บัตรเครดิต', 'พร้อมเพย์']
+export const FUND_CATS = [
+  'เติมเงินกองกลาง', 'รายได้เพลง', 'รายได้ YouTube', 'สปอนเซอร์',
+  'คืนเงิน', 'ใช้จ่ายจากกองกลาง', 'ปรับยอด', 'อื่นๆ',
+]
 
 export const DOC_TYPES = [
   'สัญญาจ้างทำเพลง','สัญญา MV','สัญญา Producer','สัญญา Session Musician',
@@ -56,8 +60,8 @@ export const ROLES = {
 
 // สิทธิ์ฝั่ง UI (RLS ใน DB คือด่านจริง — อันนี้ใช้ซ่อน/แสดงปุ่ม)
 export const PERMS = {
-  'Admin':       { projects:'edit', tasks:'edit', calendar:'edit', expenses:'edit', documents:'edit', users:'edit' },
-  'Manager':     { projects:'edit', tasks:'edit', calendar:'edit', expenses:'edit', documents:'edit', users:'view' },
-  'Team Member': { projects:'view', tasks:'edit', calendar:'view', expenses:'view', documents:'view', users:'view' },
-  'Viewer':      { projects:'view', tasks:'view', calendar:'view', expenses:'view', documents:'view', users:'view' },
+  'Admin':       { projects:'edit', tasks:'edit', calendar:'edit', expenses:'edit', fund:'edit', documents:'edit', users:'edit' },
+  'Manager':     { projects:'edit', tasks:'edit', calendar:'edit', expenses:'edit', fund:'edit', documents:'edit', users:'view' },
+  'Team Member': { projects:'view', tasks:'edit', calendar:'view', expenses:'view', fund:'view', documents:'view', users:'view' },
+  'Viewer':      { projects:'view', tasks:'view', calendar:'view', expenses:'view', fund:'view', documents:'view', users:'view' },
 }
