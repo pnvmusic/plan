@@ -232,6 +232,13 @@ export const updateExpense = (id, patch) =>
 export const deleteExpense = (id) =>
   supabase.from('expenses').delete().eq('id', id).then(handle)
 
+// ---------- CENTRAL FUND ----------
+export const getFundTransactions = () =>
+  supabase.from('fund_transactions').select('*').order('date', { ascending: false }).then(handle)
+
+export const createFundTransaction = (row) =>
+  supabase.from('fund_transactions').insert(row).select().single().then(handle)
+
 // ---------- DOCUMENTS ----------
 export const getDocuments = () =>
   supabase.from('documents').select('*').order('uploaded_at', { ascending: false }).then(handle)
@@ -260,6 +267,12 @@ export async function uploadFile(file, folder = 'misc') {
   const { error } = await supabase.storage.from(FILES_BUCKET).upload(path, file)
   if (error) throw error
   return path
+}
+
+export async function deleteFile(path) {
+  if (!path) return
+  const { error } = await supabase.storage.from(FILES_BUCKET).remove([path])
+  if (error) throw error
 }
 
 export async function getFileUrl(path) {

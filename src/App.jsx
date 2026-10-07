@@ -9,6 +9,7 @@ import Projects from './pages/Projects'
 import Board from './pages/Board'
 import Calendar from './pages/Calendar'
 import Expenses from './pages/Expenses'
+import Fund from './pages/Fund'
 import Documents from './pages/Documents'
 import Team from './pages/Team'
 
@@ -44,6 +45,7 @@ export default function App() {
           <Route path="/board" element={<Board />} />
           <Route path="/calendar" element={<Calendar />} />
           <Route path="/expenses" element={<Expenses />} />
+          <Route path="/fund" element={<Fund />} />
           <Route path="/documents" element={<Documents />} />
           <Route path="/team" element={<Team />} />
           <Route path="*" element={<Navigate to="/" replace />} />
