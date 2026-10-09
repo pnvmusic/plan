@@ -4,6 +4,7 @@ import { useData } from '../context/DataContext'
 import { stage, eventColor, eventIcon, eventTitle } from '../lib/constants'
 import { fmtMoney, daysBetween, thDate, todayISO } from '../lib/format'
 import { getAppleCalendarEvents } from '../lib/ical'
+import { activeExpenses, sumAmount, summarizeFinance } from '../lib/finance'
 import { Badge, Progress } from '../components/ui'
 
 const APPLE_COLOR = '#CB30E0'
@@ -22,7 +23,7 @@ const Stat = ({ ico, color, val, label, trend }) => (
 
 export default function Dashboard() {
   const nav = useNavigate()
-  const { projects, tasks, events, expenses, projectProgress, profiles } = useData()
+  const { projects, tasks, events, transactions, projectProgress, profiles } = useData()
   const [appleEvents, setAppleEvents] = useState([])
   const today = todayISO()
 
@@ -40,8 +41,8 @@ export default function Dashboard() {
     && daysBetween(today, p.deadline) >= 0 && daysBetween(today, p.deadline) <= 7)
   const openTasks = tasks.filter((t) => !t.done).length
   const overdue = tasks.filter((t) => !t.done && t.deadline && daysBetween(today, t.deadline) < 0).length
-  const totalSpent = expenses.filter((x) => x.status !== 'ยกเลิก').reduce((s, x) => s + Number(x.amount), 0)
-  const pending = expenses.filter((x) => x.status === 'รอเบิก').reduce((s, x) => s + Number(x.amount), 0)
+  const spending = activeExpenses(transactions)
+  const { expense: totalSpent, pending } = summarizeFinance(transactions)
   const localAppleUids = new Set(events.map((e) => appleUidForLocal(e.id)))
   const visibleAppleEvents = appleEvents.filter((e) => !localAppleUids.has(e.uid))
   const allEvents = [...events, ...visibleAppleEvents]
@@ -51,8 +52,7 @@ export default function Dashboard() {
     .sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || ''))).slice(0, 5)
 
   const costByProj = projects.map((p) => ({
-    p, cost: expenses.filter((x) => x.project_id === p.id && x.status !== 'ยกเลิก')
-      .reduce((s, x) => s + Number(x.amount), 0),
+    p, cost: sumAmount(spending.filter((x) => x.project_id === p.id)),
   })).filter((o) => o.cost > 0).sort((a, b) => b.cost - a.cost).slice(0, 5)
   const maxCost = Math.max(...costByProj.map((o) => o.cost), 1)
 

@@ -12,8 +12,7 @@ export function DataProvider({ children }) {
   const [projects, setProjects] = useState([])
   const [tasks, setTasks] = useState([])
   const [events, setEvents] = useState([])
-  const [expenses, setExpenses] = useState([])
-  const [fundTransactions, setFundTransactions] = useState([])
+  const [transactions, setTransactions] = useState([])
   const [documents, setDocuments] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -22,12 +21,12 @@ export function DataProvider({ children }) {
     if (!session) return
     setLoading(true); setError(null)
     try {
-      const [pr, pj, tk, ev, ex, ft, dc] = await Promise.all([
+      const [pr, pj, tk, ev, tx, dc] = await Promise.all([
         api.getProfiles(), api.getProjects(), api.getTasks(),
-        api.getEvents(), api.getExpenses(), api.getFundTransactions(), api.getDocuments(),
+        api.getEvents(), api.getTransactions(), api.getDocuments(),
       ])
       setProfiles(pr); setProjects(pj); setTasks(tk)
-      setEvents(ev); setExpenses(ex); setFundTransactions(ft); setDocuments(dc)
+      setEvents(ev); setTransactions(tx); setDocuments(dc)
     } catch (e) {
       setError(e.message || 'โหลดข้อมูลไม่สำเร็จ')
     } finally {
@@ -51,9 +50,9 @@ export function DataProvider({ children }) {
 
   return (
     <DataCtx.Provider value={{
-      profiles, projects, tasks, events, expenses, fundTransactions, documents,
+      profiles, projects, tasks, events, transactions, documents,
       loading, error, reload,
-      setProjects, setTasks, setEvents, setExpenses, setFundTransactions, setDocuments,
+      setProjects, setTasks, setEvents, setTransactions, setDocuments,
       profile, project, projectProgress,
     }}>
       {children}

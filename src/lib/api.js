@@ -219,25 +219,19 @@ export async function syncAppleEvent(action, event) {
   return data
 }
 
-// ---------- EXPENSES ----------
-export const getExpenses = () =>
-  supabase.from('expenses').select('*').order('date', { ascending: false }).then(handle)
+// ---------- FINANCE (เงินเข้า / เงินออก) ----------
+export const getTransactions = () =>
+  supabase.from('finance_transactions').select('*')
+    .order('date', { ascending: false }).order('created_at', { ascending: false }).then(handle)
 
-export const createExpense = (row) =>
-  supabase.from('expenses').insert(row).select().single().then(handle)
+export const createTransaction = (row) =>
+  supabase.from('finance_transactions').insert(row).select().single().then(handle)
 
-export const updateExpense = (id, patch) =>
-  supabase.from('expenses').update(patch).eq('id', id).select().single().then(handle)
+export const updateTransaction = (id, patch) =>
+  supabase.from('finance_transactions').update(patch).eq('id', id).select().single().then(handle)
 
-export const deleteExpense = (id) =>
-  supabase.from('expenses').delete().eq('id', id).then(handle)
-
-// ---------- CENTRAL FUND ----------
-export const getFundTransactions = () =>
-  supabase.from('fund_transactions').select('*').order('date', { ascending: false }).then(handle)
-
-export const createFundTransaction = (row) =>
-  supabase.from('fund_transactions').insert(row).select().single().then(handle)
+export const deleteTransaction = (id) =>
+  supabase.from('finance_transactions').delete().eq('id', id).then(handle)
 
 // ---------- DOCUMENTS ----------
 export const getDocuments = () =>
@@ -251,7 +245,7 @@ export const deleteDocument = (id) =>
 
 // ---------- STORAGE (ไฟล์แนบ: ใบเสร็จ, เอกสาร, reference) ----------
 // Supabase Storage รับ key เฉพาะอักษร ASCII บางกลุ่ม — ชื่อไฟล์ภาษาไทยทำให้อัปโหลด 400
-// จึงแปลงชื่อไฟล์เป็น key ปลอดภัยก่อน (ชื่อจริงเก็บแยกในตาราง documents/expenses)
+// จึงแปลงชื่อไฟล์เป็น key ปลอดภัยก่อน (ชื่อจริงเก็บแยกในตาราง documents/finance_transactions)
 function safeStorageName(filename = '') {
   const dot = filename.lastIndexOf('.')
   const ext = dot > 0 ? filename.slice(dot + 1).replace(/[^\w]/g, '').toLowerCase() : ''

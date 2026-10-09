@@ -13,8 +13,7 @@ const NAV = [
     { path: '/calendar', icon: '📅', label: 'ปฏิทิน' },
   ]},
   { group: 'การเงิน & เอกสาร', items: [
-    { path: '/expenses', icon: '💸', label: 'ค่าใช้จ่าย' },
-    { path: '/fund', icon: '🏦', label: 'เงินกองกลาง' },
+    { path: '/finance', icon: '💰', label: 'การเงิน' },
     { path: '/documents', icon: '📄', label: 'สัญญา & เอกสาร' },
   ]},
   { group: 'ระบบ', items: [
@@ -26,8 +25,7 @@ const META = {
   '/projects': { t: 'โปรเจกต์เพลง', s: 'จัดการโปรเจกต์เพลงทุกขั้นตอน' },
   '/board': { t: 'Task Board', s: 'ลากการ์ดเพื่ออัปเดตขั้นตอนการทำงาน' },
   '/calendar': { t: 'ปฏิทิน', s: 'นัดอัด ประชุม และ deadline ทั้งหมด' },
-  '/expenses': { t: 'ค่าใช้จ่าย', s: 'บันทึกและติดตามค่าใช้จ่ายเพื่อเบิกเงิน' },
-  '/fund': { t: 'เงินกองกลาง', s: 'บันทึกเงินเข้า เงินออก และยอดคงเหลือ' },
+  '/finance': { t: 'การเงิน', s: 'บันทึกเงินเข้า เงินออก สถานะเบิก และยอดคงเหลือ' },
   '/documents': { t: 'สัญญา & เอกสาร', s: 'เอกสารอ้างอิงผูกกับโปรเจกต์' },
   '/team': { t: 'ทีม & สิทธิ์', s: 'ผู้ใช้และระดับการเข้าถึง' },
 }
@@ -36,7 +34,7 @@ export default function Layout({ children }) {
   const nav = useNavigate()
   const loc = useLocation()
   const { profile, signOut } = useAuth()
-  const { tasks, expenses } = useData()
+  const { tasks, transactions } = useData()
   const [open, setOpen] = useState(false)
   const [dark, setDark] = useState(false)
 
@@ -57,7 +55,7 @@ export default function Layout({ children }) {
 
   const meta = META[loc.pathname] || { t: 'pnvPlan', s: '' }
   const openTasks = tasks.filter((t) => !t.done).length
-  const pendingExp = expenses.filter((e) => e.status === 'รอเบิก').length
+  const pendingExp = transactions.filter((x) => x.direction === 'out' && x.status === 'รอเบิก').length
 
   const toggleTheme = () => {
     const next = !dark
@@ -75,7 +73,7 @@ export default function Layout({ children }) {
 
   const badgeFor = (path) =>
     path === '/board' && openTasks ? openTasks :
-    path === '/expenses' && pendingExp ? pendingExp : null
+    path === '/finance' && pendingExp ? pendingExp : null
 
   return (
     <div className="layout">

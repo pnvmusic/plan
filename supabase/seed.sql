@@ -21,7 +21,7 @@ begin
 
   -- ล้างข้อมูลตัวอย่างเดิม (เฉพาะที่ seed สร้าง — ระวังถ้ามีข้อมูลจริงปนอยู่)
   delete from public.documents;
-  delete from public.expenses;
+  delete from public.finance_transactions;
   delete from public.events;
   delete from public.tasks;
   delete from public.projects;
@@ -72,18 +72,21 @@ begin
    ('รีวิวอาร์ตเวิร์ก — คำว่ารัก','meeting','2026-06-21','15:00','16:00','ออนไลน์', p5, array[me], ''),
    ('Deadline: ปล่อยซิงเกิล แสงสุดท้าย','deadline','2026-07-04','00:00','','', p1, array[me], 'ส่ง distributor ก่อน 3 วัน');
 
-  -- ---------- EXPENSES ----------
-  insert into public.expenses (date, category, amount, project_id, vendor, method, status, note, created_by) values
-   ('2026-06-15','ค่า Studio',8000, p2,'Studio 28','โอนธนาคาร','เบิกแล้ว','จองห้อง A 2 วัน', me),
-   ('2026-06-12','ค่า Mix',15000, p1,'จูน มิกซ์','พร้อมเพย์','จ่ายแล้ว','มิกซ์ 1 เพลง', me),
-   ('2026-06-10','ค่า Master',6000, p3,'Sterling Studio','โอนธนาคาร','รอเบิก','', me),
-   ('2026-06-08','ค่า MV',120000, p8,'Frame House','โอนธนาคาร','รอเบิก','มัดจำ 50%', me),
-   ('2026-06-05','ค่า Arranger',12000, p4,'โอม โปรดิวเซอร์','พร้อมเพย์','จ่ายแล้ว','เรียบเรียง 2 เพลง', me),
-   ('2026-06-03','ค่า Musician',9000, p2,'วงเซสชัน 3 คน','เงินสด','เบิกแล้ว','มือกลอง+เบส+กีตาร์', me),
-   ('2026-06-01','ค่า Artwork',7000, p5,'ฟ้า อาร์ตเวิร์ก','พร้อมเพย์','จ่ายแล้ว','ปก + visual', me),
-   ('2026-05-28','ค่าเดินทาง',2400, p8,'แท็กซี่/น้ำมัน','เงินสด','รอเบิก','สำรวจโลเคชัน', me),
-   ('2026-05-20','ค่าอุปกรณ์',3500, p2,'Music World','บัตรเครดิต','จ่ายแล้ว','สายแจ็ค+ไมค์สำรอง', me),
-   ('2026-05-18','ค่า Studio',5000, p1,'Studio 28','โอนธนาคาร','ยกเลิก','ยกเลิกคิว เลื่อนวัน', me);
+  -- ---------- FINANCE (เงินเข้า / เงินออก) ----------
+  insert into public.finance_transactions (date, direction, category, amount, project_id, counterparty, method, status, note, created_by) values
+   ('2026-05-15','in','เติมเงินกองกลาง',200000, null,'p n v .','โอนธนาคาร','ได้รับแล้ว','เงินตั้งต้นกองกลาง', me),
+   ('2026-06-20','in','รายได้เพลง',18500, p5,'Distributor','โอนธนาคาร','ได้รับแล้ว','ค่า streaming ไตรมาสก่อน', me);
+  insert into public.finance_transactions (date, direction, category, amount, project_id, counterparty, method, status, note, created_by) values
+   ('2026-06-15','out','ค่า Studio',8000, p2,'Studio 28','โอนธนาคาร','เบิกแล้ว','จองห้อง A 2 วัน', me),
+   ('2026-06-12','out','ค่า Mix',15000, p1,'จูน มิกซ์','พร้อมเพย์','จ่ายแล้ว','มิกซ์ 1 เพลง', me),
+   ('2026-06-10','out','ค่า Master',6000, p3,'Sterling Studio','โอนธนาคาร','รอเบิก','', me),
+   ('2026-06-08','out','ค่า MV',120000, p8,'Frame House','โอนธนาคาร','รอเบิก','มัดจำ 50%', me),
+   ('2026-06-05','out','ค่า Arranger',12000, p4,'โอม โปรดิวเซอร์','พร้อมเพย์','จ่ายแล้ว','เรียบเรียง 2 เพลง', me),
+   ('2026-06-03','out','ค่า Musician',9000, p2,'วงเซสชัน 3 คน','เงินสด','เบิกแล้ว','มือกลอง+เบส+กีตาร์', me),
+   ('2026-06-01','out','ค่า Artwork',7000, p5,'ฟ้า อาร์ตเวิร์ก','พร้อมเพย์','จ่ายแล้ว','ปก + visual', me),
+   ('2026-05-28','out','ค่าเดินทาง',2400, p8,'แท็กซี่/น้ำมัน','เงินสด','รอเบิก','สำรวจโลเคชัน', me),
+   ('2026-05-20','out','ค่าอุปกรณ์',3500, p2,'Music World','บัตรเครดิต','จ่ายแล้ว','สายแจ็ค+ไมค์สำรอง', me),
+   ('2026-05-18','out','ค่า Studio',5000, p1,'Studio 28','โอนธนาคาร','ยกเลิก','ยกเลิกคิว เลื่อนวัน', me);
 
   -- ---------- DOCUMENTS ----------
   insert into public.documents (name, type, project_id, size, note, uploaded_by) values

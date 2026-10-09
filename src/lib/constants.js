@@ -24,16 +24,23 @@ export const TYPES = ['Single', 'EP', 'Album', 'Acoustic', 'Cover']
 
 export const ARTISTS = ['p n v .', 'p n v . feat.', 'อื่นๆ']
 
-export const EXP_CATS = [
-  'ค่า MV','ค่า Mix','ค่า Master','ค่า Arranger','ค่า Studio',
-  'ค่า Musician','ค่า Artwork','ค่าเดินทาง','ค่าอุปกรณ์','อื่นๆ',
-]
-export const EXP_STATUS = { 'รอเบิก':'#ffb020', 'เบิกแล้ว':'#4aa8ff', 'จ่ายแล้ว':'#3ddc91', 'ยกเลิก':'#6b768f' }
+// ---------- การเงิน (เงินเข้า / เงินออก) ----------
+export const FIN_DIRECTIONS = { in: 'เงินเข้า', out: 'เงินออก' }
+export const FIN_DIR_COLOR = { in: '#3ddc91', out: '#ff6f91' }
+export const FIN_CATS = {
+  in: ['เติมเงินกองกลาง', 'รายได้เพลง', 'รายได้ YouTube', 'สปอนเซอร์', 'คืนเงิน', 'ปรับยอด', 'อื่นๆ'],
+  out: [
+    'ค่า MV', 'ค่า Mix', 'ค่า Master', 'ค่า Arranger', 'ค่า Studio',
+    'ค่า Musician', 'ค่า Artwork', 'ค่าเดินทาง', 'ค่าอุปกรณ์', 'ใช้จ่ายจากกองกลาง', 'ปรับยอด', 'อื่นๆ',
+  ],
+}
+export const FIN_STATUS = {
+  in: { 'ได้รับแล้ว': '#3ddc91', 'ยกเลิก': '#6b768f' },
+  out: { 'รอเบิก': '#ffb020', 'เบิกแล้ว': '#4aa8ff', 'จ่ายแล้ว': '#3ddc91', 'ยกเลิก': '#6b768f' },
+}
+export const FIN_DEFAULT_STATUS = { in: 'ได้รับแล้ว', out: 'รอเบิก' }
+export const FIN_ALL_STATUS = { ...FIN_STATUS.in, ...FIN_STATUS.out }
 export const PAY_METHODS = ['โอนธนาคาร', 'เงินสด', 'บัตรเครดิต', 'พร้อมเพย์']
-export const FUND_CATS = [
-  'เติมเงินกองกลาง', 'รายได้เพลง', 'รายได้ YouTube', 'สปอนเซอร์',
-  'คืนเงิน', 'ใช้จ่ายจากกองกลาง', 'ปรับยอด', 'อื่นๆ',
-]
 
 export const DOC_TYPES = [
   'สัญญาจ้างทำเพลง','สัญญา MV','สัญญา Producer','สัญญา Session Musician',
@@ -53,15 +60,15 @@ export const eventTitle = (e) => e?.task_id ? String(e.title || '').replace(/^De
 
 export const ROLES = {
   'Admin':       { label: 'Admin',       desc: 'จัดการทุกอย่างได้' },
-  'Manager':     { label: 'Manager',     desc: 'ดู/แก้โปรเจกต์ ค่าใช้จ่าย ปฏิทิน' },
+  'Manager':     { label: 'Manager',     desc: 'ดู/แก้โปรเจกต์ การเงิน ปฏิทิน' },
   'Team Member': { label: 'Team Member', desc: 'ดูงานตัวเอง อัปเดต task' },
   'Viewer':      { label: 'Viewer',      desc: 'ดูได้อย่างเดียว' },
 }
 
 // สิทธิ์ฝั่ง UI (RLS ใน DB คือด่านจริง — อันนี้ใช้ซ่อน/แสดงปุ่ม)
 export const PERMS = {
-  'Admin':       { projects:'edit', tasks:'edit', calendar:'edit', expenses:'edit', fund:'edit', documents:'edit', users:'edit' },
-  'Manager':     { projects:'edit', tasks:'edit', calendar:'edit', expenses:'edit', fund:'edit', documents:'edit', users:'view' },
-  'Team Member': { projects:'view', tasks:'edit', calendar:'view', expenses:'view', fund:'view', documents:'view', users:'view' },
-  'Viewer':      { projects:'view', tasks:'view', calendar:'view', expenses:'view', fund:'view', documents:'view', users:'view' },
+  'Admin':       { projects:'edit', tasks:'edit', calendar:'edit', finance:'edit', documents:'edit', users:'edit' },
+  'Manager':     { projects:'edit', tasks:'edit', calendar:'edit', finance:'edit', documents:'edit', users:'view' },
+  'Team Member': { projects:'view', tasks:'edit', calendar:'view', finance:'view', documents:'view', users:'view' },
+  'Viewer':      { projects:'view', tasks:'view', calendar:'view', finance:'view', documents:'view', users:'view' },
 }

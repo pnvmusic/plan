@@ -1,6 +1,6 @@
 # 🎵 MuseFlow — ระบบวางแผนและติดตามงานเพลง
 
-เว็บแอปสำหรับศิลปิน/ทีมโปรดักชันเพลง ใช้จัดการโปรเจกต์เพลงทั้งหมดในที่เดียว: ดูสถานะแต่ละเพลง, งานที่ค้าง, นัดอัด, ค่าใช้จ่าย, และเอกสาร/สัญญา
+เว็บแอปสำหรับศิลปิน/ทีมโปรดักชันเพลง ใช้จัดการโปรเจกต์เพลงทั้งหมดในที่เดียว: ดูสถานะแต่ละเพลง, งานที่ค้าง, นัดอัด, การเงิน (เงินเข้า/เงินออก), และเอกสาร/สัญญา
 
 **Stack:** React + Vite (frontend) · Supabase (Postgres + Auth + Storage) · Username + Password login · Deploy บน GitHub Pages
 
@@ -16,7 +16,7 @@
 - **โปรเจกต์เพลง** — 11 สถานะ (Idea → Released), ศิลปิน, ประเภท, deadline, ผู้รับผิดชอบ, note, ไฟล์ reference
 - **Task Board** — Kanban ลากการ์ดได้ (เพลง/งาน), checkbox, priority, assignee, progress %
 - **ปฏิทิน** — Month/Week/Day, นัดอัด/ประชุม/deadline
-- **ค่าใช้จ่าย** — 10 หมวด, สถานะเบิกเงิน, แนบใบเสร็จ, export CSV/PDF
+- **การเงิน** — บันทึกเงินเข้า/เงินออกในเมนูเดียว, ยอดคงเหลือ, สถานะเบิกเงิน, แนบหลักฐาน, export CSV/PDF
 - **เอกสาร** — สัญญา/ใบเสนอราคา/ลิขสิทธิ์ ผูกกับโปรเจกต์ ค้นหาได้
 - **ค้นหา & กรอง** ทุกหน้า
 - **User Roles** — Admin / Manager / Team Member / Viewer (บังคับใช้จริงด้วย Row Level Security)
@@ -38,7 +38,7 @@
 
 ### Seed ข้อมูลตัวอย่าง (ไม่บังคับ)
 
-หลังล็อกอินเข้าแอปครั้งแรกแล้ว (เพื่อให้มี profile) ให้รัน `supabase/seed.sql` ใน SQL Editor — จะใส่เพลง 8 เพลง, tasks, นัดหมาย, ค่าใช้จ่าย และเอกสารตัวอย่าง ผูกกับบัญชีของคุณ
+หลังล็อกอินเข้าแอปครั้งแรกแล้ว (เพื่อให้มี profile) ให้รัน `supabase/seed.sql` ใน SQL Editor — จะใส่เพลง 8 เพลง, tasks, นัดหมาย, รายการการเงิน และเอกสารตัวอย่าง ผูกกับบัญชีของคุณ
 
 ---
 
@@ -86,7 +86,7 @@ museflow-app/
 │  ├─ lib/        supabase.js, api.js, constants.js, format.js, exporters.js
 │  ├─ context/    AuthContext, DataContext, ToastContext
 │  ├─ components/ Layout, ui, *Form, *Detail
-│  ├─ pages/      Login, Dashboard, Projects, Board, Calendar, Expenses, Documents, Team
+│  ├─ pages/      Login, Dashboard, Projects, Board, Calendar, Finance, Documents, Team
 │  ├─ App.jsx     routing
 │  └─ main.jsx    entry
 └─ .github/workflows/deploy.yml
@@ -102,7 +102,7 @@ museflow-app/
 | `projects` | โปรเจกต์เพลง (สถานะ, deadline, owner, refs) |
 | `tasks` | งานย่อยในแต่ละเพลง (stage, assignee, priority, done) |
 | `events` | นัดหมายในปฏิทิน (recording/meeting/deadline) |
-| `expenses` | ค่าใช้จ่าย (หมวด, จำนวน, สถานะเบิก, ใบเสร็จ) |
+| `finance_transactions` | การเงิน — เงินเข้า/เงินออก (หมวด, จำนวน, สถานะ, หลักฐาน) |
 | `documents` | สัญญา/เอกสารอ้างอิง ผูกกับโปรเจกต์ |
 
 **Storage bucket:** `museflow-files` (ใบเสร็จ + เอกสาร) — อ่านได้ทุกคนที่ล็อกอิน, อัปโหลด/ลบเฉพาะ Admin/Manager
@@ -114,7 +114,7 @@ museflow-app/
 | โปรเจกต์ | แก้ | แก้ | ดู | ดู |
 | งาน/Task | แก้ | แก้ | แก้ | ดู |
 | ปฏิทิน | แก้ | แก้ | ดู | ดู |
-| ค่าใช้จ่าย | แก้ | แก้ | ดู | ดู |
+| การเงิน | แก้ | แก้ | ดู | ดู |
 | เอกสาร | แก้ | แก้ | ดู | ดู |
 | ผู้ใช้ | แก้ | ดู | ดู | ดู |
 

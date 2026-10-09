@@ -5,10 +5,11 @@ import { stage, PRIORITY, eventIcon, eventTitle } from '../lib/constants'
 import { fmtMoney, thDate, thDateLong } from '../lib/format'
 import { Avatar, Badge, Progress, Modal, Linkify, parseRef } from './ui'
 import TaskForm from './TaskForm'
+import { activeExpenses, sumAmount } from '../lib/finance'
 import * as api from '../lib/api'
 
 export default function ProjectDetail({ id, onClose, onEdit, onDelete }) {
-  const { projects, tasks, expenses, documents, events, profile, projectProgress, setTasks, reload } = useData()
+  const { projects, tasks, transactions, documents, events, profile, projectProgress, setTasks, reload } = useData()
   const { can } = useAuth()
   const [taskForm, setTaskForm] = useState(undefined)
   const p = projects.find((x) => x.id === id)
@@ -16,10 +17,10 @@ export default function ProjectDetail({ id, onClose, onEdit, onDelete }) {
 
   const pr = projectProgress(id)
   const ts = tasks.filter((t) => t.project_id === id)
-  const exp = expenses.filter((x) => x.project_id === id && x.status !== 'ยกเลิก')
+  const exp = activeExpenses(transactions).filter((x) => x.project_id === id)
   const docs = documents.filter((d) => d.project_id === id)
   const evs = events.filter((e) => e.project_id === id)
-  const cost = exp.reduce((s, x) => s + Number(x.amount), 0)
+  const cost = sumAmount(exp)
   const s = stage(p.status)
 
   const toggle = async (t) => {
